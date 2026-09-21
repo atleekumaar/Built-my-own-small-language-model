@@ -1,4 +1,4 @@
-# Train Your Own Small Language Model (SLM)
+# Built Your Own Small Language Model (SLM)
 
 This repository contains a step-by-step guide and notebook for training a custom Transformer-based Small Language Model (SLM) from scratch using **Keras** and **JAX** on the **Africa Galore** dataset.
 
