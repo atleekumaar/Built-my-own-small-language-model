@@ -1,0 +1,77 @@
+{
+  "k_folds": 5,
+  "seed": 42,
+  "word_vocab_mean": 4545.8,
+  "word_vocab_std": 92.9,
+  "word_oov_mean_pct": 20.97,
+  "word_oov_std_pct": 1.84,
+  "bpe_oov_mean_pct": 0.0,
+  "bpe_oov_std_pct": 0.0,
+  "folds": [
+    {
+      "fold": 1,
+      "train_paras": 186,
+      "val_paras": 46,
+      "val_bytes": 22740,
+      "word_vocab_size": 4585,
+      "word_val_tokens": 3673,
+      "word_unk_tokens": 749,
+      "word_oov_rate_pct": 20.39,
+      "bpe_val_tokens": 6885,
+      "bpe_unk_tokens": 0,
+      "bpe_oov_rate_pct": 0.0
+    },
+    {
+      "fold": 2,
+      "train_paras": 186,
+      "val_paras": 46,
+      "val_bytes": 22488,
+      "word_vocab_size": 4515,
+      "word_val_tokens": 3658,
+      "word_unk_tokens": 835,
+      "word_oov_rate_pct": 22.83,
+      "bpe_val_tokens": 6983,
+      "bpe_unk_tokens": 0,
+      "bpe_oov_rate_pct": 0.0
+    },
+    {
+      "fold": 3,
+      "train_paras": 186,
+      "val_paras": 46,
+      "val_bytes": 22223,
+      "word_vocab_size": 4649,
+      "word_val_tokens": 3635,
+      "word_unk_tokens": 692,
+      "word_oov_rate_pct": 19.04,
+      "bpe_val_tokens": 6724,
+      "bpe_unk_tokens": 0,
+      "bpe_oov_rate_pct": 0.0
+    },
+    {
+      "fold": 4,
+      "train_paras": 186,
+      "val_paras": 46,
+      "val_bytes": 23572,
+      "word_vocab_size": 4577,
+      "word_val_tokens": 3844,
+      "word_unk_tokens": 753,
+      "word_oov_rate_pct": 19.59,
+      "bpe_val_tokens": 7122,
+      "bpe_unk_tokens": 0,
+      "bpe_oov_rate_pct": 0.0
+    },
+    {
+      "fold": 5,
+      "train_paras": 184,
+      "val_paras": 48,
+      "val_bytes": 26358,
+      "word_vocab_size": 4403,
+      "word_val_tokens": 4254,
+      "word_unk_tokens": 979,
+      "word_oov_rate_pct": 23.01,
+      "bpe_val_tokens": 8112,
+      "bpe_unk_tokens": 0,
+      "bpe_oov_rate_pct": 0.0
+    }
+  ]
+}

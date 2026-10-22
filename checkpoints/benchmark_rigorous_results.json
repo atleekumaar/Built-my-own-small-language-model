@@ -1,0 +1,40 @@
+{
+  "word_baseline": {
+    "model_name": "slm_baseline_val (Word)",
+    "vocab_size": 4409,
+    "parameters": 2920505,
+    "total_tokens_generated": 400,
+    "total_time_seconds": 14.32,
+    "mean_latency_ms": 35.8,
+    "std_latency_ms": 2.55,
+    "median_latency_ms": 35.07,
+    "p95_latency_ms": 39.5,
+    "min_latency_ms": 32.81,
+    "max_latency_ms": 44.18,
+    "throughput_tok_per_sec": 27.94
+  },
+  "bpe_subword": {
+    "model_name": "slm_bpe_val (Byte-Level BPE)",
+    "vocab_size": 2000,
+    "parameters": 1684688,
+    "total_tokens_generated": 400,
+    "total_time_seconds": 11.47,
+    "mean_latency_ms": 28.67,
+    "std_latency_ms": 3.52,
+    "median_latency_ms": 27.83,
+    "p95_latency_ms": 33.2,
+    "min_latency_ms": 24.11,
+    "max_latency_ms": 40.67,
+    "throughput_tok_per_sec": 34.88
+  },
+  "speedup_throughput_ratio": 1.25,
+  "speedup_latency_ratio": 1.26,
+  "benchmark_protocol": {
+    "warmup_runs": 2,
+    "measured_runs": 5,
+    "prompts_count": 4,
+    "tokens_per_prompt": 20,
+    "total_tokens_per_model": 400,
+    "environment": "CPU (JAX backend), Intel Core i5-8250U, Windows 11"
+  }
+}
