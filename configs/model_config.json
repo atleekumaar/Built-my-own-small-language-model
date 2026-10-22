@@ -1,0 +1,20 @@
+{
+  "model_type": "decoder_only_transformer",
+  "vocabulary_size": 5262,
+  "max_length": 299,
+  "embedding_dim": 256,
+  "mlp_dim": 256,
+  "num_heads": 2,
+  "num_blocks": 1,
+  "dropout_rate": 0.0,
+  "activation_function": "relu",
+  "positional_embedding_type": "sinusoidal",
+  "optimizer": "adamw",
+  "learning_rate": 0.0001,
+  "weight_decay": 0.005,
+  "pad_token_id": 0,
+  "unknown_token_id": 5261,
+  "pad_token": "<PAD>",
+  "unknown_token": "<UNK>",
+  "total_parameters": 3358094
+}

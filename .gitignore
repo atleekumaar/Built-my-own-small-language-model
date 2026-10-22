@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Test caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model checkpoints (do not commit large binaries without approval)
+checkpoints/*.weights.h5
+checkpoints/*.keras
+
+# Environment / OS
+.env
+.venv
+env/
+venv/
+*.egg-info/
+.DS_Store
+Thumbs.db

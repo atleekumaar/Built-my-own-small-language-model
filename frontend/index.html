@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATLEE SLM LAB — Interactive Small Language Model Playground</title>
+  <meta name="description" content="Explore, inspect and evaluate an authentic 3.36M parameter Transformer Small Language Model running Keras 3 and JAX.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23080c14'/%3E%3Ccircle cx='50' cy='50' r='32' fill='none' stroke='%2306b6d4' stroke-width='10'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%23818cf8'/%3E%3C/svg%3E">
+</head>
+<body class="theme-dark">
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-badge" id="brandBadge">SLM-3.36M</div>
+        <div class="brand-titles">
+          <h1>ATLEE SLM LAB</h1>
+          <p class="subtitle">Explore, inspect and evaluate a custom small language model</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <div id="connectionStatusPill" class="status-pill status-loading">
+          <span class="status-dot"></span>
+          <span id="connectionStatusText">Connecting to API...</span>
+        </div>
+        <div class="model-meta-pill">
+          <span class="meta-label">Backend:</span>
+          <span id="backendDeviceText" class="meta-val">JAX CPU</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav" aria-label="Main Navigation">
+      <button class="nav-tab active" data-tab="playgroundTab" id="tabPlaygroundBtn">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Playground
+      </button>
+      <button class="nav-tab" data-tab="tokenizerTab" id="tabTokenizerBtn">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+        Tokenizer Inspector
+      </button>
+      <button class="nav-tab" data-tab="architectureTab" id="tabArchitectureBtn">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Model Architecture
+      </button>
+      <button class="nav-tab" data-tab="evaluationTab" id="tabEvaluationBtn">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Evaluation & Benchmarks
+      </button>
+    </nav>
+
+    <!-- Main Content Panes -->
+    <main class="app-main">
+      <!-- TAB 1: PLAYGROUND & PROBABILITY EXPLORER -->
+      <section id="playgroundTab" class="tab-pane active" aria-labelledby="tabPlaygroundBtn">
+        <div class="lab-grid">
+          <!-- Left Column: Controls & Prompt -->
+          <div class="panel control-panel">
+            <div class="panel-header">
+              <h2>Generation Parameters</h2>
+              <span class="panel-tag" id="panelModelTag">Autoregressive</span>
+            </div>
+
+            <!-- Model Selection Dropdown -->
+            <div class="control-field model-select-field">
+              <div class="field-header">
+                <label for="modelSelect" class="control-label">Active Model Checkpoint</label>
+                <span id="modelParamCountTag" class="char-count">3.36M params</span>
+              </div>
+              <select id="modelSelect" class="select-input">
+                <option value="slm_africa_galore" selected>Original Course Checkpoint (3.36M &bull; Historical Full Corpus)</option>
+                <option value="slm_baseline_val">Word-Level Validation Baseline (2.92M &bull; 185/47 Split)</option>
+                <option value="slm_bpe_val">Experimental Byte-Level BPE (1.68M &bull; 185/47 Split)</option>
+              </select>
+            </div>
+
+            <!-- Starter Presets -->
+            <div class="preset-group">
+              <label class="control-label">Starter Presets (from Africa Galore corpus):</label>
+              <div class="preset-buttons" role="group" aria-label="Prompt Presets">
+                <button type="button" class="preset-btn" data-preset="Abeni,">Abeni,</button>
+                <button type="button" class="preset-btn" data-preset="Jide was hungry so she went looking for">Jide was hungry</button>
+                <button type="button" class="preset-btn" data-preset="Jide was thirsty so she went looking for">Jide was thirsty</button>
+                <button type="button" class="preset-btn" data-preset="The Lagos air was thick with">Lagos air</button>
+              </div>
+            </div>
+
+            <!-- Prompt Input -->
+            <div class="control-field">
+              <div class="field-header">
+                <label for="promptInput" class="control-label">Prompt Input</label>
+                <span id="promptCharCount" class="char-count">0 / 2000</span>
+              </div>
+              <textarea id="promptInput" class="text-input" rows="4" placeholder="Enter starting prompt text (e.g. 'Abeni,')..." maxlength="2000">Abeni,</textarea>
+            </div>
+
+            <!-- Parameter Sliders -->
+            <div class="params-grid">
+              <div class="param-row">
+                <div class="param-labels">
+                  <label for="maxTokensInput" class="control-label">Max New Tokens</label>
+                  <span id="maxTokensVal" class="param-val">15</span>
+                </div>
+                <input type="range" id="maxTokensInput" class="range-slider" min="1" max="60" value="15">
+              </div>
+
+              <div class="param-row">
+                <div class="param-labels">
+                  <label for="samplingModeSelect" class="control-label">Sampling Strategy</label>
+                </div>
+                <select id="samplingModeSelect" class="select-input">
+                  <option value="greedy" selected>Greedy Decoding (Top 1)</option>
+                  <option value="random">Random Sampling (Temperature)</option>
+                </select>
+              </div>
+
+              <div class="param-row" id="tempControlRow" style="display: none;">
+                <div class="param-labels">
+                  <label for="temperatureInput" class="control-label">Temperature</label>
+                  <span id="temperatureVal" class="param-val">0.80</span>
+                </div>
+                <input type="range" id="temperatureInput" class="range-slider" min="0.1" max="2.0" step="0.05" value="0.80">
+              </div>
+
+              <div class="param-row" id="seedControlRow" style="display: none;">
+                <div class="param-labels">
+                  <label for="seedInput" class="control-label">RNG Seed (Optional)</label>
+                </div>
+                <input type="number" id="seedInput" class="number-input" placeholder="Random seed (e.g. 42)">
+              </div>
+            </div>
+
+            <!-- Actions Bar -->
+            <div class="action-bar">
+              <button id="generateBtn" type="button" class="btn btn-primary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span id="generateBtnText">Generate Tokens</span>
+              </button>
+              <button id="clearBtn" type="button" class="btn btn-ghost">Clear</button>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="playgroundError" class="alert-box alert-error" style="display: none;" role="alert">
+              <span class="alert-title">Generation Error:</span>
+              <span id="playgroundErrorMsg"></span>
+            </div>
+          </div>
+
+          <!-- Right Column: Generation Output & Probability Explorer -->
+          <div class="panel output-panel">
+            <div class="panel-header">
+              <h2>Model Generation & Probabilities</h2>
+              <div class="telemetry-tags">
+                <span id="latencyPill" class="telemetry-pill">Latency: -- ms</span>
+                <span id="throughputPill" class="telemetry-pill">Speed: -- tok/s</span>
+              </div>
+            </div>
+
+            <!-- Text Display Output -->
+            <div class="generation-viewer" id="generationViewer">
+              <div class="viewer-legend">
+                <span class="legend-chip legend-prompt">Prompt Context</span>
+                <span class="legend-chip legend-generated">Model Continuation</span>
+              </div>
+              <div class="text-content-box" id="textContentBox" tabindex="0">
+                <span class="placeholder-text">Click "Generate Tokens" to run real inference on the trained small language model...</span>
+              </div>
+              <div class="viewer-actions">
+                <button type="button" id="copyTextBtn" class="btn btn-sm btn-ghost" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy Text
+                </button>
+                <span id="copyToast" class="copy-toast" style="display: none;">Copied to clipboard</span>
+              </div>
+            </div>
+
+            <!-- NEXT-TOKEN PROBABILITY EXPLORER -->
+            <div class="probability-explorer-section">
+              <div class="section-title-row">
+                <div class="section-heading">
+                  <h3>Next-Token Probability Explorer</h3>
+                  <p class="section-desc">Actual top-k candidate probabilities computed by the Transformer dense projection</p>
+                </div>
+                <!-- Step Selector Controls -->
+                <div class="step-nav" id="stepNavControls" style="display: none;">
+                  <button type="button" id="prevStepBtn" class="step-nav-btn" aria-label="Previous Token Step">&larr;</button>
+                  <span id="stepIndicatorText" class="step-indicator">Step 1 / 15</span>
+                  <button type="button" id="nextStepBtn" class="step-nav-btn" aria-label="Next Token Step">&rarr;</button>
+                </div>
+              </div>
+
+              <!-- Step Chips Carousel -->
+              <div id="stepChipsContainer" class="step-chips-row" style="display: none;"></div>
+
+              <!-- Candidate Probability Bars -->
+              <div id="probBarsContainer" class="prob-bars-list">
+                <div class="empty-state">
+                  <p>Generate tokens to inspect step-by-step top-5 candidate probability distributions.</p>
+                </div>
+              </div>
+
+              <div class="explorer-disclaimer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>Displays the model's top-k candidates for each generation step. The remaining probability mass is distributed across the other 5,200+ vocabulary entries.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: TOKENIZER INSPECTOR -->
+      <section id="tokenizerTab" class="tab-pane" aria-labelledby="tabTokenizerBtn">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Tokenizer & Vocabulary Inspector</h2>
+              <p class="section-desc">Inspect word boundaries, integer IDs, and out-of-vocabulary (&lt;UNK&gt;) mapping</p>
+            </div>
+            <button id="inspectTokenizeBtn" type="button" class="btn btn-sm btn-primary">Analyze Text</button>
+          </div>
+
+          <div class="control-field">
+            <label for="tokenizerTextInput" class="control-label">Sample Input Text</label>
+            <textarea id="tokenizerTextInput" class="text-input" rows="3" placeholder="Type or paste text to inspect token segmentation...">Abeni lived in a vibrant neighborhood with colorful beads. Lagos was sunny!</textarea>
+          </div>
+
+          <!-- Tokenizer Diagnostics Summary -->
+          <div class="metrics-card-row">
+            <div class="metric-card">
+              <span class="metric-num" id="tokenCountMetric">0</span>
+              <span class="metric-label">Total Tokens</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num" id="vocabSizeMetric">5,262</span>
+              <span class="metric-label">Vocabulary Size</span>
+            </div>
+            <div class="metric-card" id="unkCountCard">
+              <span class="metric-num" id="unkCountMetric">0</span>
+              <span class="metric-label">Unknown Tokens (&lt;UNK&gt;)</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num" id="padIdMetric">0</span>
+              <span class="metric-label">Pad Token ID (&lt;PAD&gt;)</span>
+            </div>
+          </div>
+
+          <!-- Interactive Token Chips -->
+          <div class="tokens-section">
+            <div class="tokens-heading-row">
+              <h3>Token Stream & Boundaries</h3>
+              <span class="tokens-hint">Click a token to see vocabulary details</span>
+            </div>
+            <div id="tokenChipsDisplay" class="token-chips-grid">
+              <p class="placeholder-text">Click "Analyze Text" to segment input into token chips.</p>
+            </div>
+          </div>
+
+          <!-- Tokenizer Architecture Explanation -->
+          <div class="info-card">
+            <h4>About SimpleWordTokenizer</h4>
+            <p>
+              This model uses whitespace-based word tokenization (<code>re.split(" +", text)</code>) rather than subword BPE.
+              Attached punctuation marks (such as commas or periods) remain part of the word token (e.g. <code>"beads."</code> is a distinct token from <code>"beads"</code>).
+              Any word or punctuation combination that never appeared in the 232 Africa Galore paragraphs maps directly to the special catch-all <strong>&lt;UNK&gt;</strong> token (Index 5,261).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: MODEL ARCHITECTURE DASHBOARD -->
+      <section id="architectureTab" class="tab-pane" aria-labelledby="tabArchitectureBtn">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Model Architecture & Hyperparameters</h2>
+              <p class="section-desc">Verified specifications for the custom Keras 3 / JAX Small Language Model</p>
+            </div>
+            <div id="archCheckpointBadge" class="status-pill status-ready">Checkpoint Loaded</div>
+          </div>
+
+          <!-- Architecture Highlight Metrics -->
+          <div class="metrics-card-row">
+            <div class="metric-card highlight">
+              <span class="metric-num" id="totalParamsMetric">3,358,094</span>
+              <span class="metric-label">Total Parameters (~3.36M)</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">1</span>
+              <span class="metric-label">Transformer Blocks</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">2</span>
+              <span class="metric-label">Attention Heads</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">256</span>
+              <span class="metric-label">Embedding Dim (d_model)</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">299</span>
+              <span class="metric-label">Max Context Length</span>
+            </div>
+          </div>
+
+          <!-- Layer By Layer Breakdown Table -->
+          <div class="layer-breakdown-section">
+            <h3>Layer-by-Layer Parameter Distribution</h3>
+            <div class="table-container">
+              <table class="tech-table">
+                <thead>
+                  <tr>
+                    <th>Layer Component</th>
+                    <th>Type</th>
+                    <th>Output Dimension</th>
+                    <th>Parameters</th>
+                    <th>Role in Model</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Token & Position Embedding</strong></td>
+                    <td><code>TokenAndPositionEmbedding</code></td>
+                    <td>(Batch, 299, 256)</td>
+                    <td>1,347,072</td>
+                    <td>Maps 5,262 token IDs into 256-dim vector space + adds sinusoidal position encodings.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Multi-Head Self-Attention</strong></td>
+                    <td><code>MultiHeadSelfAttention</code></td>
+                    <td>(Batch, 299, 256)</td>
+                    <td>263,424</td>
+                    <td>2 heads, key_dim=256, causal triangular mask ensuring tokens only attend to past context.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Feed-Forward Network (MLP)</strong></td>
+                    <td><code>FeedForwardNetwork</code></td>
+                    <td>(Batch, 299, 256)</td>
+                    <td>132,096</td>
+                    <td>2 Dense layers (256 &rarr; 256) with ReLU activation, residual connection, and LayerNorm.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Output Dense Logits</strong></td>
+                    <td><code>layers.Dense</code></td>
+                    <td>(Batch, 299, 5262)</td>
+                    <td>1,352,334</td>
+                    <td>Linear projection from 256-dim hidden states to unnormalized vocabulary logits.</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td colspan="3"><strong>Total Trainable Parameters</strong></td>
+                    <td><strong>3,358,094</strong></td>
+                    <td><strong>100% Trainable (12.81 MB float32 weights)</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Training Hyperparameters -->
+          <div class="params-spec-grid">
+            <div class="spec-card">
+              <h4>Optimizer & Loss</h4>
+              <ul>
+                <li><strong>Optimizer:</strong> AdamW</li>
+                <li><strong>Learning Rate:</strong> 1e-4 (0.0001)</li>
+                <li><strong>Weight Decay:</strong> 0.005</li>
+                <li><strong>Loss Function:</strong> CustomMaskPadLoss</li>
+                <li><strong>Pad Token Masking:</strong> Ignore class ID 0</li>
+              </ul>
+            </div>
+            <div class="spec-card">
+              <h4>Sequence Configuration</h4>
+              <ul>
+                <li><strong>Raw Max Length:</strong> 300 tokens</li>
+                <li><strong>Autoregressive Shift:</strong> 299 tokens</li>
+                <li><strong>Batch Size:</strong> 32 (8 batches / epoch)</li>
+                <li><strong>Padding Mode:</strong> Post-padding with value 0</li>
+                <li><strong>Execution Backend:</strong> Keras 3 with JAX CPU</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: EVALUATION & BENCHMARKS -->
+      <section id="evaluationTab" class="tab-pane" aria-labelledby="tabEvaluationBtn">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Evaluation, Perplexity & CPU Benchmarks</h2>
+              <p class="section-desc">Empirical measurements from training runs, loss trajectories, and CPU inference</p>
+            </div>
+          </div>
+
+          <!-- Crucial Scientific Integrity Alert -->
+          <div class="alert-box alert-warning">
+            <div class="alert-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="alert-body">
+              <strong>Evaluation Methodology Note:</strong>
+              The measured perplexity of <strong>323.04</strong> is an <em>in-sample training-corpus fit metric</em> evaluated on the 232 Africa Galore paragraphs (18,803 tokens).
+              Because the entire corpus was used during training, <strong>no held-out validation dataset currently exists</strong>. Do not interpret in-sample perplexity as general-purpose generalization ability.
+            </div>
+          </div>
+
+          <!-- Metric Cards -->
+          <div class="metrics-card-row">
+            <div class="metric-card">
+              <span class="metric-num">5.7778</span>
+              <span class="metric-label">Per-Token Cross-Entropy</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">323.04</span>
+              <span class="metric-label">In-Sample Perplexity</span>
+            </div>
+            <div class="metric-card highlight">
+              <span class="metric-num">53.39</span>
+              <span class="metric-label">Throughput (Tokens / Sec)</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">18.73 ms</span>
+              <span class="metric-label">Mean Latency / Token</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num">21.26 ms</span>
+              <span class="metric-label">P95 Latency / Token</span>
+            </div>
+          </div>
+
+          <!-- Training Loss History Chart -->
+          <div class="chart-section">
+            <h3>Training Loss Progression (30 Epochs on CPU)</h3>
+            <p class="section-desc">Actual scalar loss recorded from the local reproduction run</p>
+            <div class="loss-bars-chart" id="lossChartContainer">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+            <div class="chart-legend-row">
+              <span class="chart-legend-item"><span class="chart-legend-color"></span> Training Loss (CustomMaskPadLoss)</span>
+              <span class="chart-meta">Initial: 8.5388 &rarr; Final: 5.8278</span>
+            </div>
+          </div>
+
+          <!-- Phase 5 Scientific Experiment Comparison Table -->
+          <div class="benchmark-details-section">
+            <h3>Phase 5 Scientific Validation &amp; Fair Model Comparison</h3>
+            <p class="section-desc">Rigorous evaluation on identical 47 held-out validation paragraphs (15,916 UTF-8 bytes) with byte-normalized likelihood (BPB)</p>
+
+            <!-- Cross-Tokenizer Scientific Integrity Alert -->
+            <div class="alert-box alert-warning" style="margin-bottom: 1.25rem;">
+              <div class="alert-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="alert-body">
+                <strong>Scientific Methodology Warning — Cross-Tokenizer Perplexity Comparability:</strong>
+                Per-token perplexity (<em>PPL = exp(CE)</em>) cannot be compared directly between Word and BPE models because their token granularities differ (6.3 bytes/token for Word vs. 3.5 bytes/token for BPE).
+                Furthermore, the Word model's raw loss naively maps <strong>22.7% of held-out tokens to &lt;UNK&gt;</strong> without modeling the unseen characters.
+                To establish a fair benchmark, we evaluate <strong>Bits Per UTF-8 Byte (BPB)</strong> on identical text, both raw and adjusted for open-vocabulary unseen word entropy.
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="tech-table">
+                <thead>
+                  <tr>
+                    <th>Model Checkpoint</th>
+                    <th>Tokenizer &amp; Vocab</th>
+                    <th>Parameters</th>
+                    <th>Val OOV (&lt;UNK&gt;)</th>
+                    <th>Token-Specific Val PPL</th>
+                    <th>Raw BPB (bits/byte)</th>
+                    <th>Open-Vocab Adj. BPB</th>
+                    <th>CPU Speed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Word-Level Validation Baseline</strong><br><code>slm_baseline_val</code></td>
+                    <td><code>SimpleWordTokenizer</code><br>(4,409 words &bull; 6.3 B/tok)</td>
+                    <td>2,920,505</td>
+                    <td><span class="unk-tag" style="background:var(--warning)">22.7% (944 UNK)</span></td>
+                    <td>1,068.32 <small>(Coarse)</small></td>
+                    <td><strong>1.5969</strong> <small>(Omits UNK chars)</small></td>
+                    <td><strong>2.1602</strong> <small>(+15.6b/UNK)</small></td>
+                    <td>27.9 tok/s <small>(35.1ms)</small></td>
+                  </tr>
+                  <tr class="highlight-row" style="background: rgba(6, 182, 212, 0.06);">
+                    <td><strong>Experimental Byte-Level BPE</strong><br><code>slm_bpe_val</code></td>
+                    <td><code>BPETokenizer</code><br>(2,000 subwords &bull; 3.5 B/tok)</td>
+                    <td><strong>1,684,688</strong><br><span class="tag-pill" style="font-size:10px; color:var(--cyan-light); border:1px solid var(--cyan-primary); padding:1px 4px; border-radius:3px;">-42.3% Params</span></td>
+                    <td><span class="tag-pill" style="font-size:10px; color:var(--success); border:1px solid var(--success); padding:1px 4px; border-radius:3px;">0.0% (Zero UNK)</span></td>
+                    <td>392.55 <small>(Fine)</small></td>
+                    <td><strong>2.4623</strong> <small>(Exact byte NLL)</small></td>
+                    <td><strong>2.4623</strong> <small>(True Open-Vocab)</small></td>
+                    <td><strong>34.9 tok/s</strong><br><span class="tag-pill" style="font-size:10px; color:var(--success); border:1px solid var(--success); padding:1px 4px; border-radius:3px;">1.25x Speedup</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Original Course Checkpoint</strong><br><code>slm_africa_galore</code></td>
+                    <td><code>SimpleWordTokenizer</code><br>(5,262 words)</td>
+                    <td>3,358,094</td>
+                    <td>0% <small>(Memorized)</small></td>
+                    <td>323.04 <small>(In-sample fit)</small></td>
+                    <td><em>N/A (No split)</em></td>
+                    <td><em>N/A (No split)</em></td>
+                    <td>53.39 tok/s</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Detailed Benchmark Table -->
+          <div class="benchmark-details-section">
+            <h3>CPU Inference Benchmark Protocol</h3>
+            <div class="table-container">
+              <table class="tech-table">
+                <thead>
+                  <tr>
+                    <th>Benchmark Dimension</th>
+                    <th>Measured Metric</th>
+                    <th>Measurement Conditions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Execution Hardware</strong></td>
+                    <td>Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz (8 logical cores), 16 GB RAM, Windows 11</td>
+                    <td>Local host environment without GPU acceleration (CPU execution)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Corpus &amp; Split</strong></td>
+                    <td>232 Paragraphs (185 Train / 47 Held-Out Validation, Seed 42)</td>
+                    <td>Zero leakage, 0 exact string overlap, max 5-gram Jaccard: 0.113</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Framework &amp; Backend</strong></td>
+                    <td>Keras 3.13.0 + JAX 0.5.1 CPU Backend + Tokenizers 0.23.2</td>
+                    <td>Autoregressive generation with CustomMaskPadLoss</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Generation Throughput</strong></td>
+                    <td>53.39 tokens / second</td>
+                    <td>3 distinct prompts &times; 3 runs (10 tokens each)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Latency Distribution</strong></td>
+                    <td>Mean: 18.73 ms &bull; Median: 18.36 ms &bull; P95: 21.26 ms</td>
+                    <td>Min: 17.39 ms &bull; Max: 22.43 ms</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Evaluation Corpus</strong></td>
+                    <td>Africa Galore (232 paragraphs)</td>
+                    <td>19,065 total tokens (18,803 evaluated non-pad tokens)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>ATLEE SLM LAB &bull; Built with Keras 3 &amp; JAX &bull; Small Language Model Architecture</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/atleekumaar/Built-my-own-small-language-model" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
