@@ -133,6 +133,14 @@ def load_model_by_id(model_id: str) -> None:
     state.model = build_model(state.config)
     state.config.total_parameters = state.model.count_params()
     w_p = resolve_path(meta["weights_path"])
+    if not w_p.exists():
+        stem = w_p.name.replace(".weights.h5", "").replace(".keras", "")
+        for alt_name in [f"{stem}.keras", f"{stem}.weights.h5"]:
+            cand = w_p.parent / alt_name
+            if cand.exists():
+                w_p = cand
+                break
+
     if w_p.exists():
         load_checkpoint(state.model, str(w_p))
         state.checkpoint_loaded = True

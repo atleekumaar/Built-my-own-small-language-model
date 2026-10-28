@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: atlee-slm-lab
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: KERAS_BACKEND
+        value: jax
+      - key: JAX_PLATFORMS
+        value: cpu
+      - key: HOST
+        value: 0.0.0.0

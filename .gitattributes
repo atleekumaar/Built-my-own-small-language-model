@@ -1,0 +1,2 @@
+checkpoints/*.weights.h5 filter=lfs diff=lfs merge=lfs -text
+checkpoints/*.keras filter=lfs diff=lfs merge=lfs -text

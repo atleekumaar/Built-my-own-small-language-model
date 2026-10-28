@@ -8,9 +8,9 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Model checkpoints (do not commit large binaries without approval)
-checkpoints/*.weights.h5
-checkpoints/*.keras
+# Model checkpoints (tracked via Git LFS)
+!checkpoints/*.weights.h5
+!checkpoints/*.keras
 
 # Environment / OS
 .env

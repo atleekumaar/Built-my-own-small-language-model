@@ -24,8 +24,8 @@ import keras
 class CustomMaskPadLoss(keras.losses.Loss):
     """Computes SparseCategoricalCrossentropy while ignoring padding token ID."""
 
-    def __init__(self, pad_token_id: int | None = 0, **kwargs: Any):
-        super().__init__(name="custom_mask_pad_loss", **kwargs)
+    def __init__(self, pad_token_id: int | None = 0, name: str = "custom_mask_pad_loss", **kwargs: Any):
+        super().__init__(name=name, **kwargs)
         self.pad_token_id = pad_token_id
 
     def call(self, y_true: jax.Array, y_pred: jax.Array) -> jax.Array:
