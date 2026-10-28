@@ -1,0 +1,26 @@
+{
+  "evaluation_protocol": "sliding_window_full_sequence",
+  "total_validation_paragraphs": 47,
+  "total_validation_bytes": 26159,
+  "byte_coverage_pct": 100.0,
+  "models": {
+    "word_baseline": {
+      "evaluated_target_tokens": 4170,
+      "unk_tokens": 946,
+      "unk_rate_pct": 22.69,
+      "per_token_ce_nats": 6.9676,
+      "perplexity": 1061.67,
+      "raw_bpb": 1.6024,
+      "adjusted_bpb": 2.1669
+    },
+    "bpe_subword": {
+      "evaluated_target_tokens": 8008,
+      "unk_tokens": 0,
+      "unk_rate_pct": 0.0,
+      "per_token_ce_nats": 5.9678,
+      "perplexity": 390.65,
+      "raw_bpb": 2.6357,
+      "adjusted_bpb": 2.6357
+    }
+  }
+}

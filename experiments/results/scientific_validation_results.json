@@ -1,0 +1,204 @@
+{
+  "contamination_audit": {
+    "train_count": 185,
+    "val_count": 47,
+    "index_overlap": 0,
+    "exact_overlap": 0,
+    "max_5gram_jaccard": 0.1132,
+    "pairs_above_30pct_jaccard": 0
+  },
+  "word_baseline": {
+    "train": {
+      "total_tokens": 14651,
+      "total_bytes": 91222,
+      "total_unk_tokens": 0,
+      "unk_rate_pct": 0.0,
+      "per_token_ce_nats": 5.9881,
+      "perplexity": 398.66,
+      "raw_bpb": 1.3875,
+      "adjusted_bpb": 1.3875,
+      "bytes_per_token": 6.226
+    },
+    "val": {
+      "total_tokens": 4152,
+      "total_bytes": 26159,
+      "total_unk_tokens": 944,
+      "unk_rate_pct": 22.74,
+      "per_token_ce_nats": 6.9738,
+      "perplexity": 1068.32,
+      "raw_bpb": 1.5969,
+      "adjusted_bpb": 2.1602,
+      "bytes_per_token": 6.3
+    }
+  },
+  "bpe_subword": {
+    "train": {
+      "total_tokens": 24766,
+      "total_bytes": 91222,
+      "total_unk_tokens": 0,
+      "unk_rate_pct": 0.0,
+      "per_token_ce_nats": 5.5956,
+      "perplexity": 269.23,
+      "raw_bpb": 2.1917,
+      "adjusted_bpb": 2.1917,
+      "bytes_per_token": 3.683
+    },
+    "val": {
+      "total_tokens": 7475,
+      "total_bytes": 26159,
+      "total_unk_tokens": 0,
+      "unk_rate_pct": 0.0,
+      "per_token_ce_nats": 5.9727,
+      "perplexity": 392.56,
+      "raw_bpb": 2.4623,
+      "adjusted_bpb": 2.4623,
+      "bytes_per_token": 3.5
+    }
+  },
+  "qualitative_evaluation": [
+    {
+      "prompt": "Kilimanjaro is",
+      "word_greedy": {
+        "text": "Kilimanjaro is a traditional and a traditional and a traditional and a traditional and a traditional and a and a and a traditional and a and a",
+        "latency_ms_per_tok": 27.54,
+        "stats": {
+          "rep_rate": 0.833,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "Kilimanjaro is a a a a a a is a a a a a the the the the the the the the the the the the the",
+        "latency_ms_per_tok": 19.36,
+        "stats": {
+          "rep_rate": 0.792,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "Kilimanjaro is a a consistoconut life,a, and food co preing, fizz, and set. O.est, thein"
+      }
+    },
+    {
+      "prompt": "The Sahara desert",
+      "word_greedy": {
+        "text": "The Sahara desert a traditional and a traditional and the and the of the of the of the of the of the of the of the of the",
+        "latency_ms_per_tok": 16.33,
+        "stats": {
+          "rep_rate": 0.708,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "The Sahara desert is a is a a a a a the, the the the the the the the the the the the the the the the",
+        "latency_ms_per_tok": 11.48,
+        "stats": {
+          "rep_rate": 0.739,
+          "words": 24,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "The Sahara desert is a peppers el enjoyed,e, and Africa andard and auffy. The resulting in sheait and a c"
+      }
+    },
+    {
+      "prompt": "Ancient civilizations",
+      "word_greedy": {
+        "text": "<UNK> <UNK> is a traditional and a traditional and a traditional and a traditional and a traditional and the and the and the and the of the",
+        "latency_ms_per_tok": 17.55,
+        "stats": {
+          "rep_rate": 0.667,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "Ancient civilizations, a a a the in the the the the the the the the the the the the the the the the the the the",
+        "latency_ms_per_tok": 11.05,
+        "stats": {
+          "rep_rate": 0.75,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "Ancient civilizations, a While Nigeria her,e, andary le eachil. rumb. The exceptional Asflyan, a"
+      }
+    },
+    {
+      "prompt": "Wildlife in Africa",
+      "word_greedy": {
+        "text": "<UNK> in Africa and a traditional and the and the of the of the of the of the of the of the of the of the of the",
+        "latency_ms_per_tok": 14.24,
+        "stats": {
+          "rep_rate": 0.708,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "Wildlife in Africa, a a a a a a a is a a a a a a a is a is a a a a a a",
+        "latency_ms_per_tok": 10.14,
+        "stats": {
+          "rep_rate": 0.833,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "Wildlife in Africa, ainally herds brx, theade its dough from theyeas, the Ghana.ive, and theic,"
+      }
+    },
+    {
+      "prompt": "Abeni visited",
+      "word_greedy": {
+        "text": "Abeni visited is a traditional and a traditional and a traditional and a traditional and a and a and a and a and a and a and",
+        "latency_ms_per_tok": 13.8,
+        "stats": {
+          "rep_rate": 0.792,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "Abeni visited is a a a a a a is a is a a a a a the in the the the the the the the the",
+        "latency_ms_per_tok": 11.19,
+        "stats": {
+          "rep_rate": 0.708,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "Abeni visited is a open animals\ufffd a6on in theolog amers, becw the rhythmic the savann, and theat,"
+      }
+    },
+    {
+      "prompt": "Jide was thirsty so she went looking for",
+      "word_greedy": {
+        "text": "Jide was thirsty so she went looking for a a traditional a traditional a traditional and a traditional and the and the with a traditional of the and the and the and the",
+        "latency_ms_per_tok": 14.26,
+        "stats": {
+          "rep_rate": 0.542,
+          "words": 25,
+          "unk_count": 0
+        }
+      },
+      "bpe_greedy": {
+        "text": "Jide was thirsty so she went looking for a a a a is a popular, and the air. The The result is a a a a a a a a a",
+        "latency_ms_per_tok": 10.18,
+        "stats": {
+          "rep_rate": 0.5,
+          "words": 23,
+          "unk_count": 0
+        }
+      },
+      "bpe_sampling_t07": {
+        "text": "Jide was thirsty so she went looking for a s yeast attract Dn, andel areften red and a accomp. The honey.here, and the mm"
+      }
+    }
+  ]
+}

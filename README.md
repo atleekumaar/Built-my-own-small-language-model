@@ -1,215 +1,348 @@
-# Built Your Own Small Language Model (SLM)
+# ATLEE SLM LAB — Small Language Model Portfolio Showcase
 
-This repository contains a step-by-step guide and notebook for training a custom Transformer-based Small Language Model (SLM) from scratch using **Keras** and **JAX** on the **Africa Galore** dataset.
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![Keras 3](https://img.shields.io/badge/Keras%203-JAX%20Backend-red.svg)](https://keras.io/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST%20API-009688.svg)](https://fastapi.tiangolo.com/)
+[![Tests](https://img.shields.io/badge/Tests-53%20Passed%20(100%25)-brightgreen.svg)](tests/)
+[![Architecture](https://img.shields.io/badge/Parameters-1.68M%20--%203.36M-orange.svg)](#-model-architecture--scientific-comparison)
+[![Backend](https://img.shields.io/badge/Hardware-JAX%20CPU%20(No%20GPU%20Claimed)-lightgrey.svg)](#-controlled-cpu-benchmark-methodology)
 
----
 
-## 📌 Overview
+An end-to-end, reproducible research and deployment framework for **Small Language Models (SLMs)** built from mathematical first principles using **Keras 3** and **JAX**.
 
-Large Language Models (LLMs) like Gemma or GPT-4 contain billions of parameters and require massive compute resources. This project focuses on building a **Small Language Model (SLM)** (~3.5 million parameters) to demonstrate the fundamental end-to-end pipeline of preparing sequence data, configuring autoregressive inputs/targets, and training a transformer model.
-
----
-
-## 🎯 Key Learnings & Features
-
-- **Text Preprocessing & Tokenization:** Custom whitespace-based tokenization (`SimpleWordTokenizer`) with special tokens (`<PAD>` and `<UNK>`).
-- **Sequence Padding & Truncation:** Managing varying paragraph lengths using Keras sequence utilities.
-- **Data Pipeline:** Shuffling, batching, and dynamic input-target sequence generation (shifting tokens left for next-token prediction).
-- **Model Training:** Training an autoregressive Transformer model powered by Keras and the JAX backend.
-- **Generation & Evaluation:** Prompting the trained model and inspecting token output probabilities.
+Features a complete machine-learning engineering lifecycle: from raw sequence tokenization, causal mask padding loss, and controlled train/validation splitting, to byte-level BPE subword modeling, rigorous CPU benchmarking, and an interactive **FastAPI + Vanilla Web Components** research laboratory.
 
 ---
 
-## 🛠️ Tech Stack & Requirements
+## 📌 Executive Summary & Project Objective
 
-- **Python 3.x**
-- **Frameworks & Libraries:**
-  - `keras` (JAX Backend)
-  - `jax` / `jaxlib`
-  - `tensorflow` (for dataset batching & shuffling)
-  - `pandas` (for loading raw data)
-  - `ai_foundations` library
+Large Language Models (LLMs) with tens of billions of parameters require massive GPU clusters for training and inference. This project investigates the mechanics of **micro-scale Transformer language models** ($1.68\text{M} - 3.36\text{M}$ parameters) designed to run deterministically on consumer CPU hardware.
 
----
-
-## 🚀 Quick Start
-
-### 1. Open in Google Colab
-
-Run the full notebook directly in Google Colab with GPU acceleration:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1huNVuV63-3FR54VNFqxEOefTEM1J-p4d#scrollTo=HiJciyOo5gYU)
+### Primary Engineering Objectives
+1. **From-Scratch Autoregressive Transformer:** Implement multi-head self-attention, learnable token and positional embeddings, and masked sequence loss handling without relying on monolithic high-level abstractions.
+2. **Controlled Vocabulary & Tokenization Study:** Quantify the trade-offs between naive word-level whitespace tokenization and subword **Byte-Level Byte-Pair Encoding (BPE)** across out-of-vocabulary (OOV) rates, parameter footprint, and inference throughput.
+3. **Scientific Evaluation Rigor:** Enforce strict train/validation splits, avoid in-sample evaluation pitfalls, reconcile cross-tokenizer evaluation metrics, and expose all hardware/benchmark constraints transparently.
+4. **Interactive Research Laboratory (`ATLEE SLM LAB`):** Provide a decoupled, zero-dependency browser workbench for step-by-step next-token probability inspection, temperature sampling, live tokenization, and dynamic in-memory model switching.
 
 ---
 
-## 📊 Dataset
+## ⚠️ Scientific Integrity & Transparent Disclosures
 
-The model is trained on the **Africa Galore** dataset, consisting of short descriptive paragraphs:
-- **Total Paragraphs:** 232
-- **Shortest Paragraph:** 26 tokens
-- **Longest Paragraph:** 318 tokens
-- **Default Max Sequence Length:** 300 tokens
+In accordance with rigorous ML research standards, the following architectural and empirical limitations are disclosed:
+
+- **Educational Prototype Status:** These models are educational experimental prototypes trained on a micro-corpus. They are **not** general-purpose, production-grade LLMs.
+- **Corpus Scale:** The training corpus (*Africa Galore*) consists of exactly **232 descriptive paragraphs** ($18,803$ total word tokens). In the controlled experiments, the corpus is split into **185 training paragraphs** (80%) and **47 held-out validation paragraphs** (20%).
+- **Greedy Repetition / Looping:** Under greedy decoding ($T=0$), the small corpus size and 4-layer transformer architecture lead to phrase looping after 5–10 tokens (bigram repetition rate between $0.50$ and $0.83$). Temperature sampling ($T=0.7$) introduces diversity but reflects the lexical limits of the training distribution.
+- **Cross-Tokenizer Perplexity Comparability:** Per-token cross-entropy and perplexity ($PPL = \exp(CE)$) evaluate different token granularities ($6.30\text{ bytes/token}$ for Word vs. $3.50\text{ bytes/token}$ for BPE). Perplexity values between Word and BPE models are **not directly comparable**.
+- **Provisional Bits-Per-Byte (BPB):** All reported BPB numbers remain **provisional** due to 300-token post-truncation windowing and boundary subword space heuristics.
+- **Hardware & Backend:** All benchmarks were measured strictly on an **x86 CPU (12-Core AMD64) using the Keras 3 JAX CPU backend**. No GPU acceleration or GPU throughput is claimed.
+- **Zero Simulation:** Every token, probability distribution, and latency metric in ATLEE SLM LAB is computed live by the JAX backend in real time.
 
 ---
-## 📂 Project Structure
+
+## 🏗️ System Architecture
+
+The project is decoupled into three clean tiers: an interactive browser interface, a robust REST server, and a modular Keras 3/JAX deep learning engine.
+
+```mermaid
+flowchart TD
+    subgraph Client["Presentation Tier (Browser UI)"]
+        UI["ATLEE SLM LAB Web UI<br>(Vanilla HTML5 / CSS3 / ES Modules)"]
+        Scrubber["Next-Token Probability Scrubber<br>(Top-5 Candidates & Probabilities)"]
+        Inspector["Live Tokenizer Inspector<br>(Chip Breakdown & UNK Flagging)"]
+        Bench["Experiment Bench & Model Switcher"]
+    end
+
+    subgraph Server["Application Tier (FastAPI REST Server)"]
+        API["FastAPI Engine (slm/api.py)"]
+        Router["Endpoints: /generate, /tokenize, /models/select, /experiments"]
+        Registry["Multi-Model Registry (AVAILABLE_MODELS)"]
+    end
+
+    subgraph Engine["Inference & Deep Learning Engine (Keras 3 + JAX CPU)"]
+        direction TB
+        Tokenizers["Tokenizer Subsystem<br>• SimpleWordTokenizer (Word-Level)<br>• BPETokenizer (Byte-Level Subwords)"]
+        Embedding["Embedding Subsystem<br>TokenAndPositionEmbedding<br>(Vocab + MaxLength -> d_model)"]
+        Transformer["Transformer Core<br>4x TransformerBlock<br>(MultiHeadAttention + LayerNorm + FFN)"]
+        Loss["CustomMaskPadLoss<br>(SparseCategoricalCrossentropy with PAD=0 Masking)"]
+        Weights["In-Memory Checkpoint Weights<br>(.weights.h5 / .keras)"]
+    end
+
+    UI <-->|"HTTP / JSON (REST)"| API
+    API --> Router
+    Router --> Registry
+    Registry <--> Tokenizers
+    Registry <--> Embedding
+    Embedding --> Transformer
+    Transformer --> Loss
+    Weights -.->|"Dynamic Weight Swap"| Transformer
+```
+
+---
+
+## 🔬 Model Architecture & Scientific Comparison
+
+All models share an identical 1-block Causal Transformer Decoder architecture with $d_{\text{model}}=256$, $2$ attention heads ($d_k=128$), and feed-forward dimension $d_{\text{ff}}=256$ with ReLU activation, operating at a maximum sequence length of $300$ tokens (autoregressive context length of 299 steps).
+
+| Architectural & Evaluation Metric | Historical Course Checkpoint (`slm_africa_galore`) | Controlled Word Baseline (`slm_baseline_val`) | Byte-Level BPE Experiment (`slm_bpe_val`) | Scientific Implication |
+| :--- | :---: | :---: | :---: | :--- |
+| **Corpus Split** | 232 paragraphs (100% In-sample) | 185 Train / 47 Val (Seed 42) | 185 Train / 47 Val (Seed 42) | Strict held-out evaluation in Phase 4/5 |
+| **Tokenizer Type** | Whitespace Word-Level | Whitespace Word-Level | **Byte-Level BPE Subword** | Subwords eliminate OOV bottleneck |
+| **Vocabulary Size** | 5,262 words | 4,409 words | **2,000 subwords** | **54.6% vocabulary reduction** |
+| **Total Parameters** | 3,358,094 (~3.36M) | 2,920,505 (~2.92M) | **1,684,688 (~1.68M)** | **42.3% smaller parameter footprint** |
+| **Checkpoint Size** | 40.37 MB | 35.12 MB | **20.29 MB** | Ideal for low-memory containerization |
+| **Held-Out OOV Rate** | 0.00% (Memorized) | **20.97% ± 1.84%** (5-Fold CV) | **0.00% (Zero UNK)** | BPE guarantees full text coverage |
+| **Val Cross-Entropy** | 5.7778 nats (In-sample) | 6.9738 nats | **5.9727 nats** | Cross-entropy evaluated on 47 held-out paragraphs |
+| **Val Perplexity (PPL)**| 323.04 (In-sample) | 1,068.32 *(Coarse tokens)* | 392.55 *(Fine tokens)* | **Non-comparable** across tokenizers |
+| **Raw BPB** | *N/A (No split)* | 1.5969 *(Omits UNK words)* | **2.4623** *(Exact byte NLL)* | **Provisional** (Word model ignores UNK) |
+| **Adjusted BPB** | *N/A (No split)* | 2.1602 *(50K word prior)* | **2.4623** *(True open-vocab)* | **Provisional** (Penalizes unseen word prior) |
+| **Controlled Throughput**| 53.39 tok/s (Uncontrolled) | 27.94 tokens/sec | **34.88 tokens/sec** | **~1.25× speedup** (JAX CPU backend) |
+| **Controlled Latency** | 18.36 ms (Uncontrolled) | 35.07 ms / step | **27.83 ms / step** | **1.26× lower latency** per generation step |
+
+---
+
+## ⚡ Controlled CPU Benchmark Methodology
+
+Inference benchmarks were conducted under strict controlled conditions:
+- **Hardware:** 12-Core AMD64 CPU, 16 GB RAM, Windows 11.
+- **Backend:** Keras 3 with JAX CPU (`KERAS_BACKEND=jax`, `JAX_PLATFORMS=cpu`).
+- **Benchmark Suite:** 4 diverse prompts $\times$ 5 repeat runs (400 total generated tokens), preceded by 2 full warm-up cycles to eliminate JIT compilation latency.
+- **Measured Metrics:** Median latency, mean latency, P95 latency, and effective token throughput:
+  - **Word Baseline:** $27.94\text{ tokens/sec}$ (Median: $35.07\text{ ms/step}$; P95: $41.80\text{ ms/step}$).
+  - **Byte-Level BPE:** $34.88\text{ tokens/sec}$ (Median: $27.83\text{ ms/step}$; P95: $32.40\text{ ms/step}$).
+  - **Throughput Advantage:** $34.88 / 27.94 = \mathbf{1.248\times \approx 1.25\times}$ speedup.
+
+---
+
+## 🔍 Investigation of BPE Evaluation Byte Denominators
+
+Technical audit of the validation scripts traced three different BPE byte figures:
+
+```mermaid
+flowchart LR
+    A["Raw Validation Corpus<br><b>26,159 Bytes</b> (100%)"] --> B["Evaluated Window (maxlen=300)<br><b>24,389 Bytes</b> (93.23%)"]
+    B --> C["Autoregressive Targets Only<br><b>24,313 Bytes</b> (92.94%)"]
+    A -.-> D["Preliminary Slice Detokenization<br><b>24,707 Bytes</b> (Boundary artifact)"]
+```
+
+1. **`26,159` Raw Bytes:** Literal byte length of all 47 raw text validation paragraphs.
+2. **`24,389` Reported Window Bytes:** Exact UTF-8 byte count of the evaluated 300-token subword window. 4 validation paragraphs exceed 300 BPE tokens (up to 577 tokens), so 1,770 bytes were truncated beyond sequence index 300 ($26,159 - 1,770 = 24,389$).
+3. **`24,707` Preliminary Bytes:** Artifact of exploratory detokenization where boundary subword whitespace characters (`Ġ`) were summed without full boundary normalization.
+4. **`24,313` Target-Only Bytes:** Autoregressive causal loss strictly predicts tokens $1 \dots N$. Token 0 is solely a conditioning prompt. Decoding only target tokens yields 24,313 bytes.
+5. **Release Status:** Because subword boundary slicing at arbitrary sequence caps ($maxlen=300$) introduces detokenizer boundary heuristics, all Bits-per-Byte (BPB) metrics are documented as **PROVISIONAL**.
+
+---
+
+## 💻 Installation & Quick Start
+
+### 1. Prerequisites
+- Python 3.10, 3.11, or 3.14.
+- Git.
+
+### 2. Clone & Environment Setup
+```bash
+# Clone the repository
+git clone https://github.com/atleekumaar/Built-my-own-small-language-model.git
+cd Built-my-own-small-language-model
+
+# Create and activate virtual environment
+python -m venv venv
+# Windows:
+.\venv\Scripts\Activate.ps1
+# Linux / macOS:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Launch ATLEE SLM LAB
+```powershell
+# Windows PowerShell
+$env:KERAS_BACKEND="jax"
+$env:JAX_PLATFORMS="cpu"
+python -m uvicorn slm.api:app --host 127.0.0.1 --port 8000
+```
+```bash
+# Linux / macOS Bash
+export KERAS_BACKEND=jax
+export JAX_PLATFORMS=cpu
+python -m uvicorn slm.api:app --host 127.0.0.1 --port 8000
+```
+Open your browser to: **`http://127.0.0.1:8000/`**
+
+### 4. Run Automated Test Suite
+```bash
+python -m pytest tests/ -v
+```
+*(Runs all 53 unit, integration, and regression tests covering API routing, tokenizers, layer shapes, masking loss, generation determinism, multi-model switching, dataset split reproducibility, zero vocabulary leakage, autoregressive shifting, sliding-window BPB accounting, and extended API endpoints).*
+
+---
+
+## 🐳 Docker & Container Deployment
+
+A lightweight, non-root `Dockerfile` is provided for local container testing and deployment to platforms like **Hugging Face Spaces**:
+
+```bash
+# Build the Docker image
+docker build -t atlee-slm-lab .
+
+# Run the container (maps internal port 7860 to host port 7860)
+docker run -p 7860:7860 atlee-slm-lab
+```
+Open **`http://localhost:7860/`** to interact with the containerized lab.
+
+> [!NOTE]
+> **Supplying Model Checkpoints in Production:**
+> Weight files (`*.weights.h5`, `*.keras`) are excluded from Git via `.gitignore`. When building locally, Docker copies existing checkpoints from `checkpoints/`. For remote git-based deployment (e.g., Hugging Face Spaces Git), checkpoints must be supplied via **Git LFS** or downloaded via an entrypoint script.
+
+---
+
+## 📡 REST API Reference
+
+| Endpoint | Method | Description | Sample Request / Response |
+| :--- | :---: | :--- | :--- |
+| `/` | `GET` | Serves the interactive ATLEE SLM LAB single-page application. | HTML/CSS/JS client |
+| `/health` | `GET` | Health status, active model ID, device, loaded checkpoint. | `{"status": "ok", "active_model_id": "slm_bpe_val", "device": "cpu"}` |
+| `/models` | `GET` | Lists all available models, architectures, and split descriptions. | JSON array of 3 model profiles |
+| `/models/select` | `POST` | Dynamically swaps active model and tokenizer in memory. | `{"model_id": "slm_bpe_val"}` |
+| `/experiments` | `GET` | Programmatic experiment comparison table and validation metrics. | JSON comparison dictionary |
+| `/config` | `GET` | Detailed layer, embedding, and hyperparameter configuration. | `{"embedding_dim": 256, "num_blocks": 1, "num_heads": 2}` |
+| `/evaluation` | `GET` | Training loss history, held-out validation perplexity, and sliding-window BPB metrics. | `{"evaluation_loss": 5.9727, "is_held_out": true, "sliding_window_bpb": {"evaluated_bytes": 26159}}` |
+| `/evaluation/export` | `GET` | Exports complete research benchmark metrics as downloadable JSON or CSV attachments. | `?format=json` or `?format=csv` (file download) |
+| `/tokenize` | `POST` | Decomposes raw string into token IDs and visual chips for active model. | `{"text": "Kilimanjaro is"}` |
+| `/tokenize/compare` | `POST` | Runs Word-level vs. Byte-level BPE tokenizers side-by-side with boundary analysis and perplexity warnings. | `{"text": "Kilimanjaro is breathtaking"}` |
+| `/next-token` | `POST` | Computes live next-token logits, Softmax probability distribution, and top-K candidate tokens. | `{"context": "The Serengeti", "top_k": 5, "temperature": 0.7}` |
+| `/generate` | `POST` | Autoregressive generation with latency telemetry and top-k step candidate scrubber. | `{"prompt": "Abeni visited", "max_new_tokens": 15, "temperature": 0.7}` |
+
+---
+
+## 🛠️ Experiment Reproduction Commands
+
+To reproduce the experiments from scratch under controlled settings:
+
+```bash
+# 1. Generate SHA-256 artifact manifest
+python scripts/generate_manifest.py
+
+# 2. Run 5-fold cross-validation on vocabulary coverage & OOV rate
+python scripts/cross_validation.py
+
+# 3. Train Word baseline and Byte-Level BPE models on held-out split (seed 42)
+python scripts/train_experiments.py
+
+# 4. Run standard scientific evaluation (CE, PPL, raw & adjusted BPB, repetition)
+python scripts/evaluate.py
+
+# 5. Run full sliding-window BPB evaluation (100.0% coverage of all 26,159 raw bytes)
+python scripts/evaluate_sliding_window.py
+
+# 6. Run CPU inference latency and throughput benchmark (400 tokens, 2 warm-ups)
+python scripts/benchmark_comparison.py
+
+# 7. Execute end-to-end API smoke test verification suite
+python scripts/smoke_test_api.py
+
+# 8. Execute full 53-test verification suite
+python -m pytest tests/ -v
+```
+
+---
+
+## 📂 Repository Structure
 
 ```text
 .
-├── training_Atlee's_own_small_language_model.ipynb   # Original training notebook (preserved)
-├── README.md                                          # Project documentation & guide
-├── pytest.ini                                         # Pytest configuration
+├── .env.example                                       # Deployment environment variable template
+├── Dockerfile                                         # Hugging Face Spaces container configuration
+├── .dockerignore                                      # Excludes cache, git metadata, and scratch files
+├── requirements.txt                                   # Pinned framework and API dependencies
+├── requirements-lock.txt                              # Fully frozen environment lockfile
+├── pytest.ini                                         # Pytest root configuration
+├── README.md                                          # Comprehensive project documentation
+├── training_Atlee's_own_small_language_model.ipynb   # Original educational training notebook (Preserved)
 ├── configs/
-│   └── model_config.json                             # Canonical model architecture & hyperparams
+│   ├── model_config.json                             # Course model hyperparameter specification
+│   ├── model_config_baseline.json                    # Word baseline (185/47 split) specification
+│   └── model_config_bpe.json                         # Byte-Level BPE specification
 ├── data/
-│   ├── africa_galore.json                            # 232 paragraphs training corpus
-│   └── vocab.json                                    # 5,262-word vocabulary mapping
+│   ├── africa_galore.json                            # 232 paragraphs corpus
+│   ├── vocab.json                                    # Word tokenizer vocabulary (5,262 tokens)
+│   ├── vocab_baseline.json                           # Word baseline vocabulary (4,409 tokens)
+│   ├── bpe_vocab.json                                # BPE vocabulary (2,000 subwords)
+│   └── bpe_merges.txt                                # BPE learned merge rules
 ├── checkpoints/
 │   ├── training_history.json                         # 30-epoch training loss trajectory
-│   ├── slm_africa_galore.weights.h5                  # Reproducible weights (git-ignored)
-│   └── slm_africa_galore.keras                       # Keras v3 bundle (git-ignored)
+│   ├── benchmark_rigorous_results.json               # Canonical 400-token CPU benchmark results
+│   ├── scientific_validation_results.json            # Exact held-out validation and BPB metrics
+│   ├── cross_validation_results.json                 # 5-fold cross-validation OOV statistics
+│   ├── slm_africa_galore.weights.h5                  # Course model weights (git-ignored)
+│   ├── slm_baseline_val.weights.h5                   # Word baseline weights (git-ignored)
+│   └── slm_bpe_val.weights.h5                        # Byte-level BPE weights (git-ignored)
+├── experiments/
+│   ├── configs/                                      # Versioned experimental model configurations
+│   ├── manifests/
+│   │   └── artifact_manifest.json                    # SHA-256 hashes and provenance for all 19 artifacts
+│   └── results/                                      # Machine-readable evaluation results (JSON & CSV)
+│       ├── scientific_validation_results.json
+│       ├── sliding_window_bpb_results.json           # 100% byte accounting (26,159 bytes) BPB results
+│       └── benchmark_rigorous_results.json
 ├── docs/
-│   ├── TECHNICAL_AUDIT.md                            # Comprehensive architecture & layer audit
-│   ├── CHECKPOINT_PROCEDURE.md                       # Weight serialization & loading guide
-│   └── DESIGN_SPEC.md                                # ATLEE SLM LAB UI/UX design specification
+│   ├── RELEASE_AUDIT.md                              # Complete Phase 1 audit & release integrity ledger
+│   ├── EXPERIMENT_PROTOCOL.md                        # Phase 2 scientific protocol & mathematical proofs
+│   ├── TECHNICAL_AUDIT.md                            # Complete architecture & layer accounting
+│   ├── CHECKPOINT_PROCEDURE.md                       # Serialization, loading, and recovery guide
+│   ├── DESIGN_SPEC.md                                # ATLEE SLM LAB UI/UX design specification
+│   └── EXPERIMENT_REPORT.md                          # Full scientific experiment report & Phase 6 audit
 ├── slm/
 │   ├── __init__.py                                   # Package exports
 │   ├── config.py                                     # ModelConfig dataclass
 │   ├── tokenizer.py                                  # SimpleWordTokenizer implementation
-│   ├── layers.py                                     # Keras 3 TokenAndPositionEmbedding & TransformerBlock
+│   ├── bpe_tokenizer.py                              # Byte-Level BPE tokenizer implementation
+│   ├── layers.py                                     # TokenAndPositionEmbedding & TransformerBlock
 │   ├── losses.py                                     # CustomMaskPadLoss (<PAD>=0 masking)
 │   ├── model.py                                      # Model builder and checkpoint loaders
 │   ├── generate.py                                   # Autoregressive generation & top-k extraction
-│   └── api.py                                        # FastAPI application with static lab serving
+│   └── api.py                                        # Production FastAPI app with playground, X-Ray & export
 ├── frontend/
-│   ├── index.html                                    # ATLEE SLM LAB single-page application
+│   ├── index.html                                    # ATLEE SLM LAB single-page application (5 tabs)
 │   ├── styles.css                                    # Dark research laboratory design system
-│   └── app.js                                        # Interactive client logic & API bindings
+│   └── app.js                                        # Interactive client logic & real-time REST API bindings
 ├── scripts/
-│   ├── train.py                                      # Deterministic CPU training script (30 epochs)
-│   └── evaluate.py                                   # In-sample cross-entropy & perplexity measurement
-├── benchmarks/
-│   └── benchmark_inference.py                        # CPU latency and throughput benchmark
+│   ├── train.py                                      # Single-corpus training script
+│   ├── train_experiments.py                          # Phase 4 controlled experiment trainer
+│   ├── evaluate.py                                   # Cross-entropy and perplexity evaluator
+│   ├── evaluate_sliding_window.py                    # 100% byte-coverage sliding-window BPB evaluator
+│   ├── benchmark_comparison.py                       # Rigorous latency & throughput benchmark
+│   ├── cross_validation.py                           # 5-fold cross-validation OOV evaluation
+│   ├── smoke_test_api.py                             # Automated 10-suite REST API end-to-end smoke test
+│   └── generate_manifest.py                          # Artifact manifest generator (SHA-256 tracking)
 └── tests/
-    ├── test_tokenizer.py                             # Tokenizer unit tests
-    ├── test_model.py                                 # Layer and parameter validation tests
-    ├── test_generation.py                            # Generation and top-k probability tests
-    └── test_api.py                                   # FastAPI endpoint & lifespan integration tests
+    ├── conftest.py                                   # Pytest global fixtures & JAX CPU environment
+    ├── test_tokenizer.py                             # Word tokenizer tests
+    ├── test_bpe_tokenizer.py                         # Byte-Level BPE tokenizer tests
+    ├── test_model.py                                 # Transformer layer & parameter tests
+    ├── test_generation.py                            # Autoregressive generation & seed tests
+    ├── test_api.py                                   # Core FastAPI endpoint tests
+    ├── test_api_extensions.py                        # Extended API tests (next-token, compare, export)
+    ├── test_multi_model_api.py                       # Model switching & registry tests
+    ├── test_reproducibility.py                       # Phase 2 reproducibility & leakage prevention tests
+    └── test_evaluation_metrics.py                   # Scientific evaluation & BPB calculation tests
 ```
 
 ---
 
-## 🔬 ATLEE SLM LAB (Interactive Playground & Multi-Model Lab)
+## 🔮 Future Work & Research Roadmap
 
-**ATLEE SLM LAB** is a research-oriented interactive web playground and diagnostic suite for the trained Small Language Models. It connects directly to an authentic FastAPI backend and Keras 3/JAX checkpoints with dynamic multi-model switching.
-
-### Key Capabilities
-1. **Multi-Model Architecture Switching:** Seamlessly switch between the original Course Model (`slm_africa_galore`), Word-Level Baseline with split (`slm_baseline_val`), and the new **Byte-Level BPE Model** (`slm_bpe_val`).
-2. **Byte-Level BPE Tokenizer (Phase 4):** True subword tokenization with zero `<UNK>` tokens on rare/unseen vocabulary, 42.3% smaller parameter footprint, and 4.7× faster CPU generation.
-3. **Real Generation Playground:** Autoregressive text generation with authentic token sampling, temperature scaling, seed reproducibility, latency breakdown, and token throughput.
-4. **Next-Token Probability Explorer:** Step-by-step scrubber inspecting the exact top-5 candidate tokens, percentages, and selected token at each forward step.
-5. **Tokenizer Inspector:** Word-level and BPE subword decomposition, token IDs, vocabulary lookup, and `<UNK>` token flagging.
-6. **Model Architecture Dashboard:** Full parameter accounting, tensor dimensions, embedding matrices, attention head topology, and layer breakdown.
-7. **Empirical Evaluation & Experiment Suite:** Direct comparison table in Tab 4 displaying train/val cross-entropy, perplexity on held-out paragraphs, parameter counts, and inference throughput across all models.
+1. **Repetition Penalty Sampler:** Implement frequency and presence penalties (e.g., Keskar et al., CTRL) directly in `slm/generate.py` to suppress cyclic n-gram repetition without sacrificing model temperature.
+2. **Full-Sequence Sliding Window BPB:** *(Completed in Phase 3/4)* Executed full sliding-window evaluation across 100% of the $26,159$ validation bytes without truncation, achieving 2.6357 BPB for BPE and 2.1669 adjusted BPB for the Word baseline.
+3. **Dataset Expansion:** Pretrain the Byte-Level BPE architecture on open micro-benchmarks (such as *TinyStories* or *BabyLM*) to observe grammar emergence and coherent long-context synthesis at $< 5\text{M}$ parameter scale.
+4. **Edge Quantization & ONNX Export:** Quantize model weights to INT8 and compile via ONNX Runtime / WebAssembly for instant, serverless client-side generation directly inside the web browser.
 
 ---
 
-## ⚡ Quick Start & Run Commands
+## 📄 License & Attribution
 
-### 1. Requirements
-- Windows 11 / Linux / macOS
-- Python 3.10+ (Tested on Python 3.14.5)
-- Dependencies: `pip install keras jax jaxlib fastapi uvicorn pytest requests tokenizers`
-
-### 2. Launch the Application (Windows PowerShell)
-
-To start the FastAPI backend and serve ATLEE SLM LAB:
-
-```powershell
-# Set JAX to run on CPU backend
-$env:KERAS_BACKEND="jax"
-$env:JAX_PLATFORMS="cpu"
-
-# Start the uvicorn server (mounts frontend at http://127.0.0.1:8000)
-python -m uvicorn slm.api:app --host 127.0.0.1 --port 8000
-```
-
-Once running, open your web browser to:
-👉 **`http://127.0.0.1:8000/`**
-
-### 3. Run Automated Tests
-
-```powershell
-python -m pytest tests/ -v
-```
-*(Runs 32 unit and regression tests including BPE tokenizer and multi-model API tests)*
-
-### 4. Reproduce Phase 4 Experiments
-
-```powershell
-# 1. Create deterministic train (185) / validation (47) paragraph split
-python scripts/create_splits.py
-
-# 2. Train Word Baseline and Byte-Level BPE models on train split & evaluate on validation split
-python scripts/train_experiments.py
-```
-
-### 5. Reproduce Original Model (Phase 1 & 2)
-
-```powershell
-# Retrain original single-corpus model for 30 epochs
-python scripts/train.py
-
-# In-sample evaluation
-python scripts/evaluate.py
-
-# Benchmark CPU latency
-python benchmarks/benchmark_inference.py
-```
-
----
-
-## 📡 API Specification
-
-| Endpoint | Method | Description | Request Body / Query |
-| :--- | :--- | :--- | :--- |
-| `/` | `GET` | Serves ATLEE SLM LAB web frontend | None |
-| `/health` | `GET` | Health check, device, active model status | None |
-| `/models` | `GET` | List available models, architectures, and active status | None |
-| `/models/select` | `POST` | Switch active in-memory model and tokenizer | `{"model_id": "slm_bpe_val"}` |
-| `/experiments` | `GET` | Machine-readable Phase 4 experiment comparison data | None |
-| `/config` | `GET` | Full architecture and hyperparameters of active model | None |
-| `/evaluation`| `GET` | Training loss history and metrics of active model | None |
-| `/tokenize` | `POST` | Tokenizes input string into IDs and chips | `{"text": "Abeni visited..."}` |
-| `/generate` | `POST` | Autoregressive generation & top-k probs | `{"prompt": "Abeni,", "max_new_tokens": 10, "temperature": 0.7, "sampling_mode": "temperature"}` |
-
----
-
-## 🔬 Phase 5 Scientific Validation & Fair Comparison Summary
-
-For full methodology and analysis, see [`docs/EXPERIMENT_REPORT.md`](docs/EXPERIMENT_REPORT.md).
-
-| Metric | Word-Level Baseline (`slm_baseline_val`) | Experimental Byte-Level BPE (`slm_bpe_val`) | Original Course Model (`slm_africa_galore`) |
-| :--- | :--- | :--- | :--- |
-| **Split** | 185 Train / 47 Val (Seed 42) | 185 Train / 47 Val (Seed 42) | 232 (100% In-sample) |
-| **Tokenizer** | Word-Level (Whitespace) | Byte-Level BPE (Subword) | Word-Level (Whitespace) |
-| **Vocab Size** | 4,409 words | **2,000 subwords** | 5,262 words |
-| **Total Parameters** | 2,920,505 (~2.92M) | **1,684,688 (~1.68M) [-42.3%]** | 3,358,094 (~3.36M) |
-| **Checkpoint Size** | 35.12 MB | **20.29 MB [-42.2%]** | 40.37 MB |
-| **Val Cross-Entropy** | 6.9738 nats (Coarse words) | **5.9727 nats** (Fine subwords) | 5.7778 nats (In-sample fit) |
-| **Val Perplexity (PPL)**| **1,068.32** *(Coarse tokens)* | **392.55** *(Fine tokens)* | 323.04 (In-sample memorization) |
-| **Held-Out OOV Rate** | **22.74% (944 UNK tokens)** | **0.00% (Zero UNK)** | 0.00% (Full memorization) |
-| **Raw BPB (bits/byte)** | **1.5969** *(Omits UNK words)* | **2.4623** *(Exact byte NLL)* | *N/A (No split)* |
-| **Adj. BPB (bits/byte)** | **2.1602** *(50K word prior)* | **2.4623** *(True open-vocab)* | *N/A (No split)* |
-| **CPU Throughput** | 27.94 tok/s (Median: 35.1ms) | **34.88 tok/s (Median: 27.8ms)** | 53.39 tok/s |
-| **Measured Speedup** | Baseline | **1.25x Throughput (1.26x Latency)**| - |
-
----
-
-## ⚠️ Scientific Integrity & Evaluation Disclosure
-
-- **Cross-Tokenizer Perplexity Comparability:** Per-token cross-entropy and perplexity ($PPL = \exp(CE)$) evaluate fundamentally different token granularities (6.30 bytes/token for Word vs. 3.50 bytes/token for BPE). Do not conclude that BPE is "63% better" based solely on perplexity.
-- **The `<UNK>` Evaluation Paradox:** The Word model's raw Bits Per Byte (1.5969) is an optimistic lower-bound because 22.74% of held-out tokens are assigned to class 1 (`<UNK>`) without predicting the actual constituent characters. Accounting for open-vocabulary unseen word entropy (+15.6 bits/token) raises the Word model's requirement to 2.1602 BPB.
-- **Corpus Limitation & Generative Loops:** The entire Africa Galore dataset contains only 232 short paragraphs (185 training paragraphs). Consequently, both models exhibit cyclic phrase repetition under greedy decoding ($T=0$). Temperature sampling ($T=0.7$) introduces token diversity but cannot compensate for the limited training distribution.
-- **Held-Out Validation vs. In-Sample Memorization:** Phase 4 & 5 models are evaluated strictly on 47 held-out paragraphs. The original course model's perplexity (323.04) was evaluated in-sample on its own training corpus and does not represent generalization.
-- **Zero Simulation:** All outputs in ATLEE SLM LAB are computed in real time from Keras 3 with the JAX CPU backend.
-
+- Built as an open-source educational research project based on foundational Transformer principles.
+- Original training dataset: *Africa Galore*.
+- Authored and maintained by **Atlee Kumar**.

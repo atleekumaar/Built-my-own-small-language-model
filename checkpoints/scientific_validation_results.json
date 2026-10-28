@@ -49,7 +49,7 @@
       "total_unk_tokens": 0,
       "unk_rate_pct": 0.0,
       "per_token_ce_nats": 5.9727,
-      "perplexity": 392.55,
+      "perplexity": 392.56,
       "raw_bpb": 2.4623,
       "adjusted_bpb": 2.4623,
       "bytes_per_token": 3.5
@@ -60,7 +60,7 @@
       "prompt": "Kilimanjaro is",
       "word_greedy": {
         "text": "Kilimanjaro is a traditional and a traditional and a traditional and a traditional and a traditional and a and a and a traditional and a and a",
-        "latency_ms_per_tok": 80.65,
+        "latency_ms_per_tok": 27.54,
         "stats": {
           "rep_rate": 0.833,
           "words": 25,
@@ -69,7 +69,7 @@
       },
       "bpe_greedy": {
         "text": "Kilimanjaro is a a a a a a is a a a a a the the the the the the the the the the the the the",
-        "latency_ms_per_tok": 65.58,
+        "latency_ms_per_tok": 19.36,
         "stats": {
           "rep_rate": 0.792,
           "words": 25,
@@ -84,7 +84,7 @@
       "prompt": "The Sahara desert",
       "word_greedy": {
         "text": "The Sahara desert a traditional and a traditional and the and the of the of the of the of the of the of the of the of the",
-        "latency_ms_per_tok": 52.16,
+        "latency_ms_per_tok": 16.33,
         "stats": {
           "rep_rate": 0.708,
           "words": 25,
@@ -93,7 +93,7 @@
       },
       "bpe_greedy": {
         "text": "The Sahara desert is a is a a a a a the, the the the the the the the the the the the the the the the",
-        "latency_ms_per_tok": 32.17,
+        "latency_ms_per_tok": 11.48,
         "stats": {
           "rep_rate": 0.739,
           "words": 24,
@@ -108,7 +108,7 @@
       "prompt": "Ancient civilizations",
       "word_greedy": {
         "text": "<UNK> <UNK> is a traditional and a traditional and a traditional and a traditional and a traditional and the and the and the and the of the",
-        "latency_ms_per_tok": 44.49,
+        "latency_ms_per_tok": 17.55,
         "stats": {
           "rep_rate": 0.667,
           "words": 25,
@@ -117,7 +117,7 @@
       },
       "bpe_greedy": {
         "text": "Ancient civilizations, a a a the in the the the the the the the the the the the the the the the the the the the",
-        "latency_ms_per_tok": 31.07,
+        "latency_ms_per_tok": 11.05,
         "stats": {
           "rep_rate": 0.75,
           "words": 25,
@@ -132,7 +132,7 @@
       "prompt": "Wildlife in Africa",
       "word_greedy": {
         "text": "<UNK> in Africa and a traditional and the and the of the of the of the of the of the of the of the of the of the",
-        "latency_ms_per_tok": 51.43,
+        "latency_ms_per_tok": 14.24,
         "stats": {
           "rep_rate": 0.708,
           "words": 25,
@@ -141,7 +141,7 @@
       },
       "bpe_greedy": {
         "text": "Wildlife in Africa, a a a a a a a is a a a a a a a is a is a a a a a a",
-        "latency_ms_per_tok": 32.67,
+        "latency_ms_per_tok": 10.14,
         "stats": {
           "rep_rate": 0.833,
           "words": 25,
@@ -156,7 +156,7 @@
       "prompt": "Abeni visited",
       "word_greedy": {
         "text": "Abeni visited is a traditional and a traditional and a traditional and a traditional and a and a and a and a and a and a and",
-        "latency_ms_per_tok": 71.26,
+        "latency_ms_per_tok": 13.8,
         "stats": {
           "rep_rate": 0.792,
           "words": 25,
@@ -165,7 +165,7 @@
       },
       "bpe_greedy": {
         "text": "Abeni visited is a a a a a a is a is a a a a a the in the the the the the the the the",
-        "latency_ms_per_tok": 43.89,
+        "latency_ms_per_tok": 11.19,
         "stats": {
           "rep_rate": 0.708,
           "words": 25,
@@ -180,7 +180,7 @@
       "prompt": "Jide was thirsty so she went looking for",
       "word_greedy": {
         "text": "Jide was thirsty so she went looking for a a traditional a traditional a traditional and a traditional and the and the with a traditional of the and the and the and the",
-        "latency_ms_per_tok": 71.31,
+        "latency_ms_per_tok": 14.26,
         "stats": {
           "rep_rate": 0.542,
           "words": 25,
@@ -189,7 +189,7 @@
       },
       "bpe_greedy": {
         "text": "Jide was thirsty so she went looking for a a a a is a popular, and the air. The The result is a a a a a a a a a",
-        "latency_ms_per_tok": 49.86,
+        "latency_ms_per_tok": 10.18,
         "stats": {
           "rep_rate": 0.5,
           "words": 23,

@@ -1247,3 +1247,269 @@ html, body {
     font-size: 10px;
   }
 }
+
+/* ==========================================================================
+   Phase 3 Additions: Dual Tokenizer, Next-Token X-Ray & Pipeline Styles
+   ========================================================================== */
+
+/* Dual Tokenizer Comparison Grid */
+.tokenizer-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+@media (max-width: 900px) {
+  .tokenizer-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tokenizer-column {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.tokenizer-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-xs);
+}
+
+.tokenizer-column-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tokenizer-column-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.badge-word {
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--violet-light);
+  border: 1px solid var(--violet-primary);
+}
+
+.badge-bpe {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyan-light);
+  border: 1px solid var(--cyan-primary);
+}
+
+.token-stats-bar {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.token-stat-pill {
+  background: var(--bg-surface-elevated);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.token-stat-pill strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.compare-summary-banner {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.compare-summary-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.compare-summary-text strong {
+  color: var(--cyan-light);
+}
+
+/* Next-Token X-Ray Layout */
+.xray-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 960px) {
+  .xray-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.xray-candidates-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.xray-prob-row {
+  display: grid;
+  grid-template-columns: 32px 130px 1fr 60px 50px;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.xray-prob-row:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-surface-elevated);
+}
+
+.xray-rank-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.xray-prob-row:first-child .xray-rank-pill {
+  color: var(--cyan-light);
+  font-weight: 700;
+}
+
+.xray-token-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-surface-elevated);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xray-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xray-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan-primary), var(--violet-primary));
+  border-radius: 4px;
+  transition: width 300ms ease;
+}
+
+.xray-pct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan-light);
+  text-align: right;
+}
+
+.xray-logit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* Architecture Interactive Pipeline Diagram */
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-lg) var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin-bottom: var(--space-md);
+}
+
+.pipeline-stage {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pipeline-stage:hover {
+  transform: translateY(-2px);
+  border-color: var(--cyan-primary);
+}
+
+.pipeline-stage-num {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--cyan-light);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.pipeline-stage-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2px 0 4px;
+}
+
+.pipeline-stage-dim {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--violet-light);
+}
+
+.pipeline-arrow {
+  color: var(--text-muted);
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+/* Export Buttons Group */
+.export-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-size: 12px;
+}

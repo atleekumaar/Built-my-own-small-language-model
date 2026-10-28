@@ -150,3 +150,39 @@ python -m pytest tests/ -v
 - `.gitignore` strictly protects `checkpoints/*.weights.h5` and `checkpoints/*.keras`.
 - `git status` confirms zero large binary checkpoints are staged or tracked.
 - Original notebook `training_Atlee's_own_small_language_model.ipynb` remains completely untouched.
+
+---
+
+## 7. Audit Appendix: Byte-Coverage Reconciliation & Metric Sensitivity (Phase 6 Release Gate)
+**Audit Date:** October 2026
+**Auditor Focus:** Deep inspection of BPE evaluation denominators, byte boundary definitions, and provisional BPB classification.
+
+### 1. Investigation of Unresolved BPE Evaluation Byte Denominators
+During technical validation, three distinct byte counts emerged across evaluation scripts: **24,707**, **24,389**, and **24,313** bytes, against a raw held-out validation corpus of **26,159** UTF-8 bytes. Rather than selecting one single number, the evaluation code was traced to understand each value:
+
+| Metric Identifier | Byte Count | Relative Coverage | Operational Definition in Evaluation Pipeline |
+| :--- | :---: | :---: | :--- |
+| **Raw Held-Out Validation Corpus** | **26,159 bytes** | 100.00% | The literal UTF-8 byte length of all 47 raw text paragraphs in the held-out validation split (`sum(len(p.encode('utf-8')) for p in val_paragraphs)`). |
+| **Evaluated Subword Window** | **24,389 bytes** | 93.23% | Evaluated window byte count. In `evaluate.py` / `train_experiments.py`, validation paragraphs are tokenized and truncated using `pad_sequences(..., maxlen=300, truncating='post')`. Exactly 4 out of 47 validation paragraphs exceed 300 subwords (the longest reaching 577 tokens). Decoding the evaluated 300-token window (`bpe_tokenizer.decode(enc[:300])`) across all 47 paragraphs yields **24,389 UTF-8 bytes** ($26,159 - 1,770\text{ truncated bytes} = 24,389$). |
+| **Preliminary Detokenization Artifact** | **24,707 bytes** | 94.45% | Preliminary count from exploratory detokenization routines where boundary subword spaces (`Ġ`) were summed without full whitespace post-processing, retaining 318 phantom boundary bytes. |
+| **Autoregressive Target-Loss Window** | **24,313 bytes** | 92.94% | The true target-only byte count. In causal language modeling with sequence shifting (`inputs = seq[:-1]`, `targets = seq[1:]`), token index 0 serves solely as conditioning context and is never predicted in the loss denominator. Decoding only the predicted target tokens (`enc[1:300]`) across the validation set produces **24,313 UTF-8 bytes** (76 bytes fewer than the windowed input). |
+
+### 2. Why Bits-Per-Byte (BPB) Remains Designated as PROVISIONAL
+1. **Truncation Asymmetry:** Because 4 validation paragraphs exceed the 300-token context window under BPE (while word-level tokenization averages fewer tokens per paragraph and truncates differently), the text evaluated under BPE is not strictly identical to the full 26,159-byte corpus.
+2. **Subword Boundary Heuristics:** In byte-level BPE (GPT-2 style), decoding arbitrary subword slices (`enc[1:300]`) requires boundary space reconstruction heuristics (leading `Ġ` markers). Slicing midway through a sentence or paragraph alters word prefix representations.
+3. **Conditioning Offset Handling:** Whether token 0's byte length is credited toward the denominator or excluded (as in `24,313`) shifts the resulting BPB calculation from 2.4623 to 2.4699.
+4. **Conclusion:** Pending a full-sequence evaluation with sliding window stride that evaluates 100% of the 26,159 raw bytes without truncation, all BPB figures reported in this work must be treated as **provisional comparisons**.
+
+### 3. Reconciled Cross-Model Metric Summary
+All benchmarks were measured on a 12-core CPU using the Keras 3 **JAX CPU backend**. No GPU acceleration is claimed.
+
+| Evaluation Metric | Word Baseline (`slm_baseline_val`) | Byte-Level BPE (`slm_bpe_val`) | Status / Notes |
+| :--- | :---: | :---: | :--- |
+| **Vocabulary Size** | 4,409 words | 2,000 subwords | BPE reduces vocab size by 54.6% |
+| **Total Parameters** | 2,920,505 | 1,684,688 | 42.3% parameter reduction |
+| **Val Perplexity (PPL)** | 1,068.32 | 392.55 | **Non-comparable** across tokenizers |
+| **Held-Out OOV Rate** | 20.97% ± 1.84% (5-fold CV) | 0.00% (Zero UNK) | BPE completely eliminates OOV |
+| **Raw BPB** | 1.5969 | 2.4623 | **Provisional** (Word model ignores UNK bytes) |
+| **Adjusted BPB** | 2.1602 | 2.4623 | **Provisional** (Word model penalizes UNK prior) |
+| **Controlled CPU Throughput** | 27.94 tokens/sec | 34.88 tokens/sec | Measured over 400 tokens; **~1.25× speedup** |
+| **Controlled CPU Latency** | 35.07 ms / step | 27.83 ms / step | Median step latency on JAX CPU |

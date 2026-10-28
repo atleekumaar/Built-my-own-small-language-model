@@ -42,7 +42,11 @@
       </button>
       <button class="nav-tab" data-tab="tokenizerTab" id="tabTokenizerBtn">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
-        Tokenizer Inspector
+        Tokenizer Explorer
+      </button>
+      <button class="nav-tab" data-tab="xrayTab" id="tabXrayBtn">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Next-Token X-Ray
       </button>
       <button class="nav-tab" data-tab="architectureTab" id="tabArchitectureBtn">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -50,7 +54,7 @@
       </button>
       <button class="nav-tab" data-tab="evaluationTab" id="tabEvaluationBtn">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Evaluation & Benchmarks
+        Evaluation &amp; Benchmarks
       </button>
     </nav>
 
@@ -213,61 +217,219 @@
         </div>
       </section>
 
-      <!-- TAB 2: TOKENIZER INSPECTOR -->
+      <!-- TAB 2: TOKENIZER EXPLORER (DUAL TOKENIZER COMPARISON) -->
       <section id="tokenizerTab" class="tab-pane" aria-labelledby="tabTokenizerBtn">
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2>Tokenizer & Vocabulary Inspector</h2>
-              <p class="section-desc">Inspect word boundaries, integer IDs, and out-of-vocabulary (&lt;UNK&gt;) mapping</p>
+              <h2>Dual Tokenizer Explorer</h2>
+              <p class="section-desc">Side-by-side comparison of Word-Level tokenization vs Byte-Level BPE on identical text</p>
             </div>
-            <button id="inspectTokenizeBtn" type="button" class="btn btn-sm btn-primary">Analyze Text</button>
+            <button id="inspectTokenizeBtn" type="button" class="btn btn-sm btn-primary">Compare Tokenizers</button>
           </div>
 
+          <!-- Input Textarea & Presets -->
           <div class="control-field">
-            <label for="tokenizerTextInput" class="control-label">Sample Input Text</label>
+            <div class="field-header">
+              <label for="tokenizerTextInput" class="control-label">Sample Text to Analyze</label>
+              <div class="preset-buttons" role="group" aria-label="Tokenizer Presets">
+                <button type="button" class="preset-btn tok-preset" data-text="Abeni lived in a vibrant neighborhood with colorful beads. Lagos was sunny!">Neighborhood beads</button>
+                <button type="button" class="preset-btn tok-preset" data-text="Kilimanjaro is Africa's highest free-standing mountain, towering at 5,895 meters.">Kilimanjaro summit</button>
+                <button type="button" class="preset-btn tok-preset" data-text="Jide cooked savory jollof rice with fried plantains and spicy suya skewers.">Jollof &amp; Suya</button>
+              </div>
+            </div>
             <textarea id="tokenizerTextInput" class="text-input" rows="3" placeholder="Type or paste text to inspect token segmentation...">Abeni lived in a vibrant neighborhood with colorful beads. Lagos was sunny!</textarea>
           </div>
 
-          <!-- Tokenizer Diagnostics Summary -->
-          <div class="metrics-card-row">
-            <div class="metric-card">
-              <span class="metric-num" id="tokenCountMetric">0</span>
-              <span class="metric-label">Total Tokens</span>
+          <!-- Comparative Summary Banner -->
+          <div id="compareSummaryBanner" class="compare-summary-banner">
+            <div class="compare-summary-text">
+              Raw Text: <strong id="compareRawBytes">75 bytes</strong> &bull;
+              Word Tokens: <strong id="compareWordCount">11</strong> &bull;
+              BPE Tokens: <strong id="compareBpeCount">16</strong> &bull;
+              Subword Expansion: <strong id="compareTokenRatio">1.45&times;</strong>
             </div>
-            <div class="metric-card">
-              <span class="metric-num" id="vocabSizeMetric">5,262</span>
-              <span class="metric-label">Vocabulary Size</span>
+            <span class="tag-pill" style="font-size:11px; background:var(--bg-surface); color:var(--cyan-light); border:1px solid var(--border-medium); padding:2px 8px; border-radius:4px;">
+              Zero UNK Guarantee in BPE
+            </span>
+          </div>
+
+          <!-- Dual Columns Grid -->
+          <div class="tokenizer-compare-grid">
+            <!-- Left: Word Tokenizer -->
+            <div class="tokenizer-column">
+              <div class="tokenizer-column-header">
+                <span class="tokenizer-column-title">Whitespace Word Tokenizer</span>
+                <span class="tokenizer-column-badge badge-word">SimpleWordTokenizer</span>
+              </div>
+              <div class="token-stats-bar">
+                <span class="token-stat-pill">Tokens: <strong id="wordTokenCount">--</strong></span>
+                <span class="token-stat-pill">Vocab: <strong id="wordVocabSize">4,409</strong></span>
+                <span class="token-stat-pill">UNK Rate: <strong id="wordUnkRate">--</strong></span>
+                <span class="token-stat-pill">Bytes/Tok: <strong id="wordBytesPerTok">--</strong></span>
+              </div>
+              <div class="tokens-section">
+                <div class="tokens-heading-row">
+                  <h4 style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Word Token Stream</h4>
+                  <span class="tokens-hint">Click token for ID</span>
+                </div>
+                <div id="wordTokenChipsDisplay" class="token-chips-grid">
+                  <p class="placeholder-text">Click "Compare Tokenizers" to inspect token stream.</p>
+                </div>
+              </div>
             </div>
-            <div class="metric-card" id="unkCountCard">
-              <span class="metric-num" id="unkCountMetric">0</span>
-              <span class="metric-label">Unknown Tokens (&lt;UNK&gt;)</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-num" id="padIdMetric">0</span>
-              <span class="metric-label">Pad Token ID (&lt;PAD&gt;)</span>
+
+            <!-- Right: Byte-Level BPE Tokenizer -->
+            <div class="tokenizer-column">
+              <div class="tokenizer-column-header">
+                <span class="tokenizer-column-title">Byte-Level BPE Tokenizer</span>
+                <span class="tokenizer-column-badge badge-bpe">BPETokenizer (Hugging Face)</span>
+              </div>
+              <div class="token-stats-bar">
+                <span class="token-stat-pill">Tokens: <strong id="bpeTokenCount">--</strong></span>
+                <span class="token-stat-pill">Vocab: <strong id="bpeVocabSize">2,000</strong></span>
+                <span class="token-stat-pill">UNK Rate: <strong id="bpeUnkRate" style="color:var(--success);">0.0% (Zero UNK)</strong></span>
+                <span class="token-stat-pill">Bytes/Tok: <strong id="bpeBytesPerTok">--</strong></span>
+              </div>
+              <div class="tokens-section">
+                <div class="tokens-heading-row">
+                  <h4 style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Subword Token Stream</h4>
+                  <span class="tokens-hint">Byte-level decomposition</span>
+                </div>
+                <div id="bpeTokenChipsDisplay" class="token-chips-grid">
+                  <p class="placeholder-text">Click "Compare Tokenizers" to inspect token stream.</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Interactive Token Chips -->
-          <div class="tokens-section">
-            <div class="tokens-heading-row">
-              <h3>Token Stream & Boundaries</h3>
-              <span class="tokens-hint">Click a token to see vocabulary details</span>
+          <!-- Deep-Dive Scientific Explanatory Card -->
+          <div class="alert-box alert-warning" style="margin-top: 1.25rem;">
+            <div class="alert-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div id="tokenChipsDisplay" class="token-chips-grid">
-              <p class="placeholder-text">Click "Analyze Text" to segment input into token chips.</p>
+            <div class="alert-body">
+              <strong>Why Perplexity Cannot Be Compared Across Tokenizers:</strong>
+              Perplexity is defined as \(PPL = \exp(CE)\) where Cross-Entropy is normalized <em>per token</em>.
+              Because word tokens span ~6.3 bytes/token while BPE subwords span ~3.5 bytes/token, each BPE token represents a smaller slice of entropy.
+              Furthermore, the Word model naively maps unseen words to <code>&lt;UNK&gt;</code> without predicting their constituent characters (ignoring ~15.6 bits of entropy per unseen word).
+              Always use <strong>Bits-per-Byte (BPB)</strong> for scientifically valid cross-architecture comparisons.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: NEXT-TOKEN X-RAY (LOGIT & PROBABILITY ANALYZER) -->
+      <section id="xrayTab" class="tab-pane" aria-labelledby="tabXrayBtn">
+        <div class="lab-grid xray-grid">
+          <!-- Left Column: Controls & Context -->
+          <div class="panel control-panel">
+            <div class="panel-header">
+              <h2>Next-Token X-Ray</h2>
+              <span class="panel-tag" id="xrayModelTag">Model Logits</span>
+            </div>
+
+            <!-- Context Input -->
+            <div class="control-field">
+              <div class="field-header">
+                <label for="xrayContextInput" class="control-label">Context Sequence</label>
+                <div class="preset-buttons" role="group" aria-label="X-Ray Presets">
+                  <button type="button" class="preset-btn xray-preset" data-text="Kilimanjaro is">Kilimanjaro is</button>
+                  <button type="button" class="preset-btn xray-preset" data-text="Abeni visited">Abeni visited</button>
+                  <button type="button" class="preset-btn xray-preset" data-text="The lion roamed through">The lion roamed</button>
+                </div>
+              </div>
+              <textarea id="xrayContextInput" class="text-input" rows="3" placeholder="Enter context text (e.g. 'Kilimanjaro is')...">Kilimanjaro is</textarea>
+            </div>
+
+            <!-- Parameters -->
+            <div class="params-grid">
+              <div class="param-row">
+                <div class="param-labels">
+                  <label for="xrayTempInput" class="control-label">Softmax Temperature (T)</label>
+                  <span id="xrayTempVal" class="param-val">1.00</span>
+                </div>
+                <input type="range" id="xrayTempInput" class="range-slider" min="0.05" max="2.50" step="0.05" value="1.00">
+              </div>
+
+              <div class="param-row">
+                <div class="param-labels">
+                  <label for="xrayTopKSelect" class="control-label">Top Candidates</label>
+                </div>
+                <select id="xrayTopKSelect" class="select-input">
+                  <option value="5">Top 5 Candidates</option>
+                  <option value="10" selected>Top 10 Candidates</option>
+                  <option value="15">Top 15 Candidates</option>
+                  <option value="20">Top 20 Candidates</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Actions Bar -->
+            <div class="action-bar">
+              <button id="xrayInspectBtn" type="button" class="btn btn-primary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span id="xrayBtnText">Inspect Distribution</span>
+              </button>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="xrayError" class="alert-box alert-error" style="display: none;" role="alert">
+              <span class="alert-title">X-Ray Error:</span>
+              <span id="xrayErrorMsg"></span>
+            </div>
+
+            <!-- Theoretical Note Card -->
+            <div class="info-card" style="margin-top: 1rem;">
+              <h4>Logits &amp; Temperature Scaling</h4>
+              <p>
+                The model outputs raw unnormalized logits \(z \in \mathbb{R}^V\).
+                Scaled Softmax converts logits into normalized next-token probabilities:
+                <br>
+                <code style="display:block; margin:6px 0; padding:6px; background:var(--bg-app); border-radius:4px; text-align:center;">
+                  P(w_i) = exp(z_i / T) / &sum;_j exp(z_j / T)
+                </code>
+                When \(T \to 0\), the distribution sharpens toward greedy argmax. As \(T \to \infty\), it flattens toward uniform random sampling.
+              </p>
             </div>
           </div>
 
-          <!-- Tokenizer Architecture Explanation -->
-          <div class="info-card">
-            <h4>About SimpleWordTokenizer</h4>
-            <p>
-              This model uses whitespace-based word tokenization (<code>re.split(" +", text)</code>) rather than subword BPE.
-              Attached punctuation marks (such as commas or periods) remain part of the word token (e.g. <code>"beads."</code> is a distinct token from <code>"beads"</code>).
-              Any word or punctuation combination that never appeared in the 232 Africa Galore paragraphs maps directly to the special catch-all <strong>&lt;UNK&gt;</strong> token (Index 5,261).
-            </p>
+          <!-- Right Column: Visual Probabilities & Candidate Table -->
+          <div class="panel output-panel">
+            <div class="panel-header">
+              <h2>Top Candidate Distributions</h2>
+              <div class="telemetry-tags">
+                <span id="xrayContextPill" class="telemetry-pill">Context: -- tokens</span>
+                <span id="xrayCoveragePill" class="telemetry-pill">Top-K Mass: --%</span>
+              </div>
+            </div>
+
+            <!-- Candidates Visual Bars -->
+            <div id="xrayBarsContainer" class="xray-candidates-panel">
+              <div class="empty-state">
+                <p>Click "Inspect Distribution" to compute live model logits and view next-token candidate probabilities.</p>
+              </div>
+            </div>
+
+            <!-- Candidates Detail Table -->
+            <div class="layer-breakdown-section" id="xrayTableSection" style="display:none; margin-top:1.5rem;">
+              <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); margin-bottom:8px;">Detailed Candidate Breakdown</h3>
+              <div class="table-container">
+                <table class="tech-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Token</th>
+                      <th>Token ID</th>
+                      <th>Raw Logit</th>
+                      <th>Probability</th>
+                      <th>Cumulative Mass</th>
+                    </tr>
+                  </thead>
+                  <tbody id="xrayTableBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -304,6 +466,42 @@
             <div class="metric-card">
               <span class="metric-num">299</span>
               <span class="metric-label">Max Context Length</span>
+            </div>
+          </div>
+
+          <!-- Visual Architecture Pipeline Diagram -->
+          <div class="pipeline-flow-section" style="margin: 1.5rem 0;">
+            <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); margin-bottom:10px;">Transformer Pipeline Architecture (1 Causal Block)</h3>
+            <div class="pipeline-flow">
+              <div class="pipeline-stage">
+                <span class="pipeline-stage-num">Stage 1</span>
+                <div class="pipeline-stage-name">Input Tokens</div>
+                <div class="pipeline-stage-dim">(Batch, 299)</div>
+              </div>
+              <span class="pipeline-arrow">&rarr;</span>
+              <div class="pipeline-stage">
+                <span class="pipeline-stage-num">Stage 2</span>
+                <div class="pipeline-stage-name">Token &amp; Pos Embed</div>
+                <div class="pipeline-stage-dim">(Batch, 299, 256)</div>
+              </div>
+              <span class="pipeline-arrow">&rarr;</span>
+              <div class="pipeline-stage">
+                <span class="pipeline-stage-num">Stage 3</span>
+                <div class="pipeline-stage-name">Causal Self-Attention</div>
+                <div class="pipeline-stage-dim">2 Heads (d_k=128)</div>
+              </div>
+              <span class="pipeline-arrow">&rarr;</span>
+              <div class="pipeline-stage">
+                <span class="pipeline-stage-num">Stage 4</span>
+                <div class="pipeline-stage-name">Feed-Forward MLP</div>
+                <div class="pipeline-stage-dim">256 &rarr; 256 &rarr; 256 (ReLU)</div>
+              </div>
+              <span class="pipeline-arrow">&rarr;</span>
+              <div class="pipeline-stage">
+                <span class="pipeline-stage-num">Stage 5</span>
+                <div class="pipeline-stage-name">Dense Logits &amp; Softmax</div>
+                <div class="pipeline-stage-dim">(Batch, 299, V)</div>
+              </div>
             </div>
           </div>
 
@@ -391,8 +589,18 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2>Evaluation, Perplexity & CPU Benchmarks</h2>
+              <h2>Evaluation, Perplexity &amp; CPU Benchmarks</h2>
               <p class="section-desc">Empirical measurements from training runs, loss trajectories, and CPU inference</p>
+            </div>
+            <div class="export-actions">
+              <a href="/evaluation/export?format=json" class="btn btn-sm btn-ghost btn-export" download="slm_evaluation_benchmarks.json" title="Download machine-readable JSON evaluation data">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download JSON
+              </a>
+              <a href="/evaluation/export?format=csv" class="btn btn-sm btn-ghost btn-export" download="slm_evaluation_benchmarks.csv" title="Download tabular CSV benchmark metrics">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download CSV
+              </a>
             </div>
           </div>
 
@@ -471,9 +679,9 @@
                     <th>Tokenizer &amp; Vocab</th>
                     <th>Parameters</th>
                     <th>Val OOV (&lt;UNK&gt;)</th>
-                    <th>Token-Specific Val PPL</th>
-                    <th>Raw BPB (bits/byte)</th>
-                    <th>Open-Vocab Adj. BPB</th>
+                    <th>Val PPL</th>
+                    <th>Truncated BPB (93.2% Cov)</th>
+                    <th>Sliding-Window BPB (100% Cov)</th>
                     <th>CPU Speed</th>
                   </tr>
                 </thead>
@@ -482,10 +690,10 @@
                     <td><strong>Word-Level Validation Baseline</strong><br><code>slm_baseline_val</code></td>
                     <td><code>SimpleWordTokenizer</code><br>(4,409 words &bull; 6.3 B/tok)</td>
                     <td>2,920,505</td>
-                    <td><span class="unk-tag" style="background:var(--warning)">22.7% (944 UNK)</span></td>
-                    <td>1,068.32 <small>(Coarse)</small></td>
-                    <td><strong>1.5969</strong> <small>(Omits UNK chars)</small></td>
-                    <td><strong>2.1602</strong> <small>(+15.6b/UNK)</small></td>
+                    <td><span class="unk-tag" style="background:var(--warning)">22.7% (946 UNK)</span></td>
+                    <td>1,061.67 <small>(Coarse)</small></td>
+                    <td><strong>1.5969</strong> <small>(Raw)</small><br><strong>2.1602</strong> <small>(Adj)</small></td>
+                    <td><strong>1.6024</strong> <small>(Raw)</small><br><strong>2.1669</strong> <small>(Adj +15.6b/UNK)</small></td>
                     <td>27.9 tok/s <small>(35.1ms)</small></td>
                   </tr>
                   <tr class="highlight-row" style="background: rgba(6, 182, 212, 0.06);">
@@ -493,9 +701,9 @@
                     <td><code>BPETokenizer</code><br>(2,000 subwords &bull; 3.5 B/tok)</td>
                     <td><strong>1,684,688</strong><br><span class="tag-pill" style="font-size:10px; color:var(--cyan-light); border:1px solid var(--cyan-primary); padding:1px 4px; border-radius:3px;">-42.3% Params</span></td>
                     <td><span class="tag-pill" style="font-size:10px; color:var(--success); border:1px solid var(--success); padding:1px 4px; border-radius:3px;">0.0% (Zero UNK)</span></td>
-                    <td>392.55 <small>(Fine)</small></td>
+                    <td>390.65 <small>(Fine)</small></td>
                     <td><strong>2.4623</strong> <small>(Exact byte NLL)</small></td>
-                    <td><strong>2.4623</strong> <small>(True Open-Vocab)</small></td>
+                    <td><strong>2.6357</strong> <small>(100% Full Sequence Byte NLL)</small></td>
                     <td><strong>34.9 tok/s</strong><br><span class="tag-pill" style="font-size:10px; color:var(--success); border:1px solid var(--success); padding:1px 4px; border-radius:3px;">1.25x Speedup</span></td>
                   </tr>
                   <tr>

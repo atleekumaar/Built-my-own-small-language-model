@@ -1,0 +1,17 @@
+# Core ML Framework (Keras 3 with JAX CPU Backend)
+keras>=3.3.0
+jax[cpu]>=0.4.30
+jaxlib>=0.4.30
+h5py>=3.10.0
+numpy>=1.26.0
+
+# API Server & Web Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+
+# Tokenization (Word & Byte-Level BPE)
+tokenizers>=0.19.0
+
+# Test & Evaluation
+pytest>=8.0.0

@@ -1,6 +1,6 @@
 /**
- * ATLEE SLM LAB — Interactive Playground Logic
- * Connects directly to the real Keras/JAX FastAPI backend.
+ * ATLEE SLM LAB 2.0 — Interactive Research Playground & Lab Client
+ * Connects directly to the real Keras 3 / JAX FastAPI backend.
  */
 
 // Application State
@@ -8,6 +8,7 @@ const state = {
   currentTab: 'playgroundTab',
   serverHealth: null,
   modelConfig: null,
+  availableModels: [],
   evaluationData: null,
   latestGeneration: null,
   currentStepIndex: 0,
@@ -52,7 +53,7 @@ const elements = {
   playgroundError: document.getElementById('playgroundError'),
   playgroundErrorMsg: document.getElementById('playgroundErrorMsg'),
 
-  // Probability Explorer
+  // Probability Explorer (in Playground)
   probBarsContainer: document.getElementById('probBarsContainer'),
   stepNavControls: document.getElementById('stepNavControls'),
   stepChipsContainer: document.getElementById('stepChipsContainer'),
@@ -60,14 +61,40 @@ const elements = {
   prevStepBtn: document.getElementById('prevStepBtn'),
   nextStepBtn: document.getElementById('nextStepBtn'),
 
-  // Tokenizer Inspector
+  // Dual Tokenizer Explorer
   tokenizerTextInput: document.getElementById('tokenizerTextInput'),
   inspectTokenizeBtn: document.getElementById('inspectTokenizeBtn'),
-  tokenCountMetric: document.getElementById('tokenCountMetric'),
-  vocabSizeMetric: document.getElementById('vocabSizeMetric'),
-  unkCountMetric: document.getElementById('unkCountMetric'),
-  padIdMetric: document.getElementById('padIdMetric'),
-  tokenChipsDisplay: document.getElementById('tokenChipsDisplay'),
+  tokPresetBtns: document.querySelectorAll('.tok-preset'),
+  compareRawBytes: document.getElementById('compareRawBytes'),
+  compareWordCount: document.getElementById('compareWordCount'),
+  compareBpeCount: document.getElementById('compareBpeCount'),
+  compareTokenRatio: document.getElementById('compareTokenRatio'),
+  wordTokenCount: document.getElementById('wordTokenCount'),
+  wordVocabSize: document.getElementById('wordVocabSize'),
+  wordUnkRate: document.getElementById('wordUnkRate'),
+  wordBytesPerTok: document.getElementById('wordBytesPerTok'),
+  wordTokenChipsDisplay: document.getElementById('wordTokenChipsDisplay'),
+  bpeTokenCount: document.getElementById('bpeTokenCount'),
+  bpeVocabSize: document.getElementById('bpeVocabSize'),
+  bpeUnkRate: document.getElementById('bpeUnkRate'),
+  bpeBytesPerTok: document.getElementById('bpeBytesPerTok'),
+  bpeTokenChipsDisplay: document.getElementById('bpeTokenChipsDisplay'),
+
+  // Next-Token X-Ray
+  xrayContextInput: document.getElementById('xrayContextInput'),
+  xrayTempInput: document.getElementById('xrayTempInput'),
+  xrayTempVal: document.getElementById('xrayTempVal'),
+  xrayTopKSelect: document.getElementById('xrayTopKSelect'),
+  xrayInspectBtn: document.getElementById('xrayInspectBtn'),
+  xrayBtnText: document.getElementById('xrayBtnText'),
+  xrayError: document.getElementById('xrayError'),
+  xrayErrorMsg: document.getElementById('xrayErrorMsg'),
+  xrayContextPill: document.getElementById('xrayContextPill'),
+  xrayCoveragePill: document.getElementById('xrayCoveragePill'),
+  xrayBarsContainer: document.getElementById('xrayBarsContainer'),
+  xrayTableSection: document.getElementById('xrayTableSection'),
+  xrayTableBody: document.getElementById('xrayTableBody'),
+  xrayPresetBtns: document.querySelectorAll('.xray-preset'),
 
   // Evaluation & Architecture
   lossChartContainer: document.getElementById('lossChartContainer'),
@@ -88,9 +115,9 @@ async function checkHealthAndInitialize() {
     // Update Header Status
     elements.statusPill.className = 'status-pill status-ready';
     if (health.checkpoint_loaded) {
-      elements.statusText.textContent = 'Model Ready (Checkpoint Loaded)';
+      elements.statusText.textContent = `Active: ${health.active_model_id} (Trained Checkpoint)`;
     } else {
-      elements.statusText.textContent = 'Model Ready (Untrained Baseline)';
+      elements.statusText.textContent = `Active: ${health.active_model_id} (Untrained Baseline)`;
     }
 
     elements.backendDeviceText.textContent = `${health.device.toUpperCase()}`;
@@ -102,18 +129,48 @@ async function checkHealthAndInitialize() {
         elements.archCheckpointBadge.textContent = 'Checkpoint Loaded';
       } else {
         elements.archCheckpointBadge.className = 'status-pill status-warning';
-        elements.archCheckpointBadge.textContent = 'Baseline (No Checkpoint)';
+        elements.archCheckpointBadge.textContent = 'Untrained Baseline';
       }
     }
 
+    // Populate Dynamic Model Selector from GET /models
+    await populateModelSelector(health.active_model_id);
+
     // Fetch config and evaluation metrics
-    fetchModelConfig();
-    fetchEvaluationMetrics();
+    await fetchModelConfig();
+    await fetchEvaluationMetrics();
   } catch (err) {
     console.error('API Health check failed:', err);
     elements.statusPill.className = 'status-pill status-error';
     elements.statusText.textContent = 'API Offline';
     elements.backendDeviceText.textContent = 'Disconnected';
+  }
+}
+
+async function populateModelSelector(activeModelId) {
+  try {
+    const res = await fetch('/models');
+    if (!res.ok) return;
+    const data = await res.json();
+    state.availableModels = data.models || [];
+
+    if (elements.modelSelect && state.availableModels.length > 0) {
+      elements.modelSelect.innerHTML = '';
+      state.availableModels.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name} (${m.split_description || ''})`;
+        if (m.id === activeModelId) opt.selected = true;
+        elements.modelSelect.appendChild(opt);
+      });
+
+      const activeModel = state.availableModels.find(m => m.id === activeModelId);
+      if (activeModel && elements.modelParamCountTag) {
+        elements.modelParamCountTag.textContent = `${(activeModel.parameters / 1e6).toFixed(2)}M params`;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not load models list:', err);
   }
 }
 
@@ -127,12 +184,13 @@ async function fetchModelConfig() {
       if (totalParamsEl && cfg.total_parameters) {
         totalParamsEl.textContent = cfg.total_parameters.toLocaleString();
       }
-      if (elements.vocabSizeMetric && cfg.vocabulary_size) {
-        elements.vocabSizeMetric.textContent = cfg.vocabulary_size.toLocaleString();
-      }
       const panelTag = document.getElementById('panelModelTag');
       if (panelTag) {
         panelTag.textContent = cfg.tokenizer_type === 'bpe' ? 'BPE Subword' : 'Word-Level';
+      }
+      const xrayTag = document.getElementById('xrayModelTag');
+      if (xrayTag) {
+        xrayTag.textContent = cfg.active_model_id || 'Active Model';
       }
     }
   } catch (err) {
@@ -171,9 +229,9 @@ elements.navTabs.forEach(tabBtn => {
       state.currentTab = targetPaneId;
     }
 
-    // Auto-analyze tokenizer when switching to tokenizer tab if chips are empty
-    if (targetPaneId === 'tokenizerTab' && elements.tokenChipsDisplay.children.length <= 1) {
-      analyzeTokenizer();
+    // Auto-analyze tokenizer when switching to tokenizer tab if empty
+    if (targetPaneId === 'tokenizerTab' && elements.wordTokenChipsDisplay.children.length <= 1) {
+      analyzeDualTokenizer();
     }
   });
 });
@@ -183,27 +241,34 @@ elements.navTabs.forEach(tabBtn => {
 // ============================================================================
 
 // Prompt Character Counter
-elements.promptInput.addEventListener('input', () => {
-  const len = elements.promptInput.value.length;
-  elements.promptCharCount.textContent = `${len} / 2000`;
-});
+if (elements.promptInput && elements.promptCharCount) {
+  elements.promptInput.addEventListener('input', () => {
+    elements.promptCharCount.textContent = `${elements.promptInput.value.length} / 2000`;
+  });
+}
 
 // Max Tokens Slider
-elements.maxTokensInput.addEventListener('input', () => {
-  elements.maxTokensVal.textContent = elements.maxTokensInput.value;
-});
+if (elements.maxTokensInput && elements.maxTokensVal) {
+  elements.maxTokensInput.addEventListener('input', () => {
+    elements.maxTokensVal.textContent = elements.maxTokensInput.value;
+  });
+}
 
 // Temperature Slider
-elements.temperatureInput.addEventListener('input', () => {
-  elements.temperatureVal.textContent = parseFloat(elements.temperatureInput.value).toFixed(2);
-});
+if (elements.temperatureInput && elements.temperatureVal) {
+  elements.temperatureInput.addEventListener('input', () => {
+    elements.temperatureVal.textContent = parseFloat(elements.temperatureInput.value).toFixed(2);
+  });
+}
 
 // Sampling Mode Switcher
-elements.samplingModeSelect.addEventListener('change', () => {
-  const isRandom = elements.samplingModeSelect.value === 'random';
-  elements.tempControlRow.style.display = isRandom ? 'flex' : 'none';
-  elements.seedControlRow.style.display = isRandom ? 'flex' : 'none';
-});
+if (elements.samplingModeSelect) {
+  elements.samplingModeSelect.addEventListener('change', () => {
+    const isRandom = elements.samplingModeSelect.value === 'random';
+    elements.tempControlRow.style.display = isRandom ? 'flex' : 'none';
+    elements.seedControlRow.style.display = isRandom ? 'flex' : 'none';
+  });
+}
 
 // Model Architecture Selector
 if (elements.modelSelect) {
@@ -236,7 +301,7 @@ if (elements.modelSelect) {
       // Refresh config and token metrics
       await fetchModelConfig();
       if (state.currentTab === 'tokenizerTab') {
-        analyzeTokenizer();
+        analyzeDualTokenizer();
       }
     } catch (err) {
       console.error('Failed to switch model:', err);
@@ -245,7 +310,7 @@ if (elements.modelSelect) {
   });
 }
 
-// Starter Presets
+// Starter Presets for Playground
 elements.presetBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     const preset = btn.getAttribute('data-preset');
@@ -258,39 +323,45 @@ elements.presetBtns.forEach(btn => {
 });
 
 // Clear Button
-elements.clearBtn.addEventListener('click', () => {
-  elements.promptInput.value = '';
-  elements.promptCharCount.textContent = '0 / 2000';
-  elements.textContentBox.innerHTML = '<span class="placeholder-text">Click "Generate Tokens" to run real inference...</span>';
-  elements.latencyPill.textContent = 'Latency: -- ms';
-  elements.throughputPill.textContent = 'Speed: -- tok/s';
-  elements.copyTextBtn.disabled = true;
-  elements.probBarsContainer.innerHTML = '<div class="empty-state"><p>Generate tokens to inspect step-by-step top-5 candidate probability distributions.</p></div>';
-  elements.stepNavControls.style.display = 'none';
-  elements.stepChipsContainer.style.display = 'none';
-  elements.playgroundError.style.display = 'none';
-  state.latestGeneration = null;
-});
+if (elements.clearBtn) {
+  elements.clearBtn.addEventListener('click', () => {
+    elements.promptInput.value = '';
+    elements.promptCharCount.textContent = '0 / 2000';
+    elements.textContentBox.innerHTML = '<span class="placeholder-text">Click "Generate Tokens" to run real inference...</span>';
+    elements.latencyPill.textContent = 'Latency: -- ms';
+    elements.throughputPill.textContent = 'Speed: -- tok/s';
+    elements.copyTextBtn.disabled = true;
+    elements.probBarsContainer.innerHTML = '<div class="empty-state"><p>Generate tokens to inspect step-by-step top-5 candidate probability distributions.</p></div>';
+    elements.stepNavControls.style.display = 'none';
+    elements.stepChipsContainer.style.display = 'none';
+    elements.playgroundError.style.display = 'none';
+    state.latestGeneration = null;
+  });
+}
 
 // Copy Output Text
-elements.copyTextBtn.addEventListener('click', async () => {
-  if (!state.latestGeneration) return;
-  try {
-    await navigator.clipboard.writeText(state.latestGeneration.full_text);
-    elements.copyToast.style.display = 'inline';
-    setTimeout(() => {
-      elements.copyToast.style.display = 'none';
-    }, 2000);
-  } catch (err) {
-    console.error('Clipboard copy failed:', err);
-  }
-});
+if (elements.copyTextBtn) {
+  elements.copyTextBtn.addEventListener('click', async () => {
+    if (!state.latestGeneration) return;
+    try {
+      await navigator.clipboard.writeText(state.latestGeneration.full_text);
+      elements.copyToast.style.display = 'inline';
+      setTimeout(() => {
+        elements.copyToast.style.display = 'none';
+      }, 2000);
+    } catch (err) {
+      console.error('Clipboard copy failed:', err);
+    }
+  });
+}
 
 // ============================================================================
 // Autoregressive Generation Action
 // ============================================================================
 
-elements.generateBtn.addEventListener('click', handleGenerate);
+if (elements.generateBtn) {
+  elements.generateBtn.addEventListener('click', handleGenerate);
+}
 
 async function handleGenerate() {
   const prompt = elements.promptInput.value.trim();
@@ -393,7 +464,7 @@ function renderGenerationOutput(data) {
 }
 
 // ============================================================================
-// Probability Explorer (Step-by-Step Visualization)
+// Probability Explorer (Step-by-Step Visualization in Playground)
 // ============================================================================
 
 function renderProbabilityExplorer(data) {
@@ -451,22 +522,26 @@ function updateActiveStepChip() {
   elements.nextStepBtn.disabled = state.currentStepIndex === totalSteps - 1;
 }
 
-elements.prevStepBtn.addEventListener('click', () => {
-  if (state.currentStepIndex > 0) {
-    state.currentStepIndex--;
-    updateActiveStepChip();
-    displayStepProbabilities(state.currentStepIndex);
-  }
-});
+if (elements.prevStepBtn) {
+  elements.prevStepBtn.addEventListener('click', () => {
+    if (state.currentStepIndex > 0) {
+      state.currentStepIndex--;
+      updateActiveStepChip();
+      displayStepProbabilities(state.currentStepIndex);
+    }
+  });
+}
 
-elements.nextStepBtn.addEventListener('click', () => {
-  const total = state.latestGeneration.step_top_candidates.length;
-  if (state.currentStepIndex < total - 1) {
-    state.currentStepIndex++;
-    updateActiveStepChip();
-    displayStepProbabilities(state.currentStepIndex);
-  }
-});
+if (elements.nextStepBtn) {
+  elements.nextStepBtn.addEventListener('click', () => {
+    const total = state.latestGeneration.step_top_candidates.length;
+    if (state.currentStepIndex < total - 1) {
+      state.currentStepIndex++;
+      updateActiveStepChip();
+      displayStepProbabilities(state.currentStepIndex);
+    }
+  });
+}
 
 function displayStepProbabilities(stepIdx) {
   const data = state.latestGeneration;
@@ -483,7 +558,7 @@ function displayStepProbabilities(stepIdx) {
 
     const isSelected = cand.token === chosenToken;
 
-    // Token Label with badge if selected
+    // Token Label
     const labelSpan = document.createElement('div');
     labelSpan.className = 'prob-token-label';
     labelSpan.textContent = cand.token;
@@ -505,7 +580,7 @@ function displayStepProbabilities(stepIdx) {
     fill.style.width = `${pct.toFixed(2)}%`;
     track.appendChild(fill);
 
-    // Probability Number
+    // Probability Value
     const valSpan = document.createElement('div');
     valSpan.className = 'prob-val-text';
     valSpan.textContent = `${pct.toFixed(2)}%`;
@@ -518,22 +593,34 @@ function displayStepProbabilities(stepIdx) {
 }
 
 // ============================================================================
-// Tokenizer Inspector
+// Dual Tokenizer Explorer (Word vs BPE Side-by-Side)
 // ============================================================================
 
-elements.inspectTokenizeBtn.addEventListener('click', analyzeTokenizer);
+if (elements.inspectTokenizeBtn) {
+  elements.inspectTokenizeBtn.addEventListener('click', analyzeDualTokenizer);
+}
 
-async function analyzeTokenizer() {
+// Tokenizer Presets
+elements.tokPresetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const txt = btn.getAttribute('data-text');
+    if (txt && elements.tokenizerTextInput) {
+      elements.tokenizerTextInput.value = txt;
+      analyzeDualTokenizer();
+    }
+  });
+});
+
+async function analyzeDualTokenizer() {
   const text = elements.tokenizerTextInput.value.trim();
   if (!text) {
-    elements.tokenChipsDisplay.innerHTML = '<p class="placeholder-text">Enter text to tokenize.</p>';
-    elements.tokenCountMetric.textContent = '0';
-    elements.unkCountMetric.textContent = '0';
+    if (elements.wordTokenChipsDisplay) elements.wordTokenChipsDisplay.innerHTML = '<p class="placeholder-text">Enter text to tokenize.</p>';
+    if (elements.bpeTokenChipsDisplay) elements.bpeTokenChipsDisplay.innerHTML = '<p class="placeholder-text">Enter text to tokenize.</p>';
     return;
   }
 
   try {
-    const res = await fetch('/tokenize', {
+    const res = await fetch('/tokenize/compare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
@@ -542,44 +629,225 @@ async function analyzeTokenizer() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    elements.tokenCountMetric.textContent = data.token_count.toLocaleString();
-    elements.vocabSizeMetric.textContent = data.vocabulary_size.toLocaleString();
-    elements.unkCountMetric.textContent = data.unknown_token_count.toLocaleString();
+    // Update Summary Banner
+    if (elements.compareRawBytes) elements.compareRawBytes.textContent = `${data.raw_bytes} bytes`;
+    if (elements.compareWordCount) elements.compareWordCount.textContent = data.word_tokenizer.token_count;
+    if (elements.compareBpeCount) elements.compareBpeCount.textContent = data.bpe_tokenizer.token_count;
+    if (elements.compareTokenRatio) elements.compareTokenRatio.textContent = `${data.token_ratio}\u00d7`;
 
-    // Render Chips
-    elements.tokenChipsDisplay.innerHTML = '';
+    // Render Word Tokenizer Column
+    const w = data.word_tokenizer;
+    if (elements.wordTokenCount) elements.wordTokenCount.textContent = w.token_count;
+    if (elements.wordVocabSize) elements.wordVocabSize.textContent = w.vocabulary_size.toLocaleString();
+    if (elements.wordUnkRate) {
+      elements.wordUnkRate.textContent = `${w.unknown_token_rate_pct}% (${w.unknown_token_count} UNK)`;
+      elements.wordUnkRate.style.color = w.unknown_token_count > 0 ? 'var(--warning)' : 'var(--text-primary)';
+    }
+    if (elements.wordBytesPerTok) elements.wordBytesPerTok.textContent = `${w.bytes_per_token} B/tok`;
 
-    data.tokens.forEach((token, idx) => {
-      const tid = data.token_ids[idx];
-      const isUnk = tid === 5261 || token === '<UNK>';
+    renderTokenChipsGrid(elements.wordTokenChipsDisplay, w.tokens, w.token_ids, true);
 
-      const chip = document.createElement('div');
-      chip.className = `token-chip-item ${isUnk ? 'is-unk' : ''}`;
+    // Render BPE Tokenizer Column
+    const b = data.bpe_tokenizer;
+    if (elements.bpeTokenCount) elements.bpeTokenCount.textContent = b.token_count;
+    if (elements.bpeVocabSize) elements.bpeVocabSize.textContent = b.vocabulary_size.toLocaleString();
+    if (elements.bpeUnkRate) elements.bpeUnkRate.textContent = '0.0% (Zero UNK)';
+    if (elements.bpeBytesPerTok) elements.bpeBytesPerTok.textContent = `${b.bytes_per_token} B/tok`;
 
-      const wordSpan = document.createElement('span');
-      wordSpan.className = 'token-chip-word';
-      wordSpan.textContent = token;
-
-      const idSpan = document.createElement('span');
-      idSpan.className = 'token-chip-id';
-      idSpan.textContent = `#${tid}`;
-
-      chip.appendChild(wordSpan);
-      chip.appendChild(idSpan);
-
-      if (isUnk) {
-        const unkTag = document.createElement('span');
-        unkTag.className = 'unk-tag';
-        unkTag.textContent = '<UNK>';
-        chip.appendChild(unkTag);
-      }
-
-      elements.tokenChipsDisplay.appendChild(chip);
-    });
+    renderTokenChipsGrid(elements.bpeTokenChipsDisplay, b.tokens, b.token_ids, false);
   } catch (err) {
-    console.error('Tokenizer inspection error:', err);
-    elements.tokenChipsDisplay.innerHTML = `<p class="placeholder-text">Tokenizer request failed: ${err.message}</p>`;
+    console.error('Tokenizer comparison error:', err);
+    if (elements.wordTokenChipsDisplay) {
+      elements.wordTokenChipsDisplay.innerHTML = `<p class="placeholder-text">Comparison request failed: ${err.message}</p>`;
+    }
   }
+}
+
+function renderTokenChipsGrid(container, tokens, tokenIds, isWord) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  tokens.forEach((token, idx) => {
+    const tid = tokenIds[idx];
+    const isUnk = isWord && (tid === 4408 || tid === 5261 || token === '<UNK>');
+
+    const chip = document.createElement('div');
+    chip.className = `token-chip-item ${isUnk ? 'is-unk' : ''}`;
+    chip.title = `Index: ${idx + 1} | Token ID: #${tid}`;
+
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'token-chip-word';
+    wordSpan.textContent = token;
+
+    const idSpan = document.createElement('span');
+    idSpan.className = 'token-chip-id';
+    idSpan.textContent = `#${tid}`;
+
+    chip.appendChild(wordSpan);
+    chip.appendChild(idSpan);
+
+    if (isUnk) {
+      const unkTag = document.createElement('span');
+      unkTag.className = 'unk-tag';
+      unkTag.textContent = '<UNK>';
+      chip.appendChild(unkTag);
+    }
+
+    container.appendChild(chip);
+  });
+}
+
+// ============================================================================
+// Next-Token X-Ray (Logit & Softmax Probability Analyzer)
+// ============================================================================
+
+if (elements.xrayTempInput && elements.xrayTempVal) {
+  elements.xrayTempInput.addEventListener('input', () => {
+    elements.xrayTempVal.textContent = parseFloat(elements.xrayTempInput.value).toFixed(2);
+  });
+}
+
+elements.xrayPresetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const txt = btn.getAttribute('data-text');
+    if (txt && elements.xrayContextInput) {
+      elements.xrayContextInput.value = txt;
+      handleXrayInspect();
+    }
+  });
+});
+
+if (elements.xrayInspectBtn) {
+  elements.xrayInspectBtn.addEventListener('click', handleXrayInspect);
+}
+
+async function handleXrayInspect() {
+  const text = elements.xrayContextInput.value.trim();
+  if (!text) {
+    showXrayError('Please enter a context sequence to evaluate next-token probabilities.');
+    return;
+  }
+
+  elements.xrayError.style.display = 'none';
+  const temperature = parseFloat(elements.xrayTempInput.value) || 1.0;
+  const topK = parseInt(elements.xrayTopKSelect.value, 10) || 10;
+
+  // Loading state
+  elements.xrayInspectBtn.disabled = true;
+  elements.xrayBtnText.textContent = 'Computing Logits...';
+  elements.xrayBarsContainer.innerHTML = '<div class="empty-state"><p>Evaluating Transformer causal layers and computing Softmax...</p></div>';
+
+  try {
+    const res = await fetch('/next-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text,
+        temperature: temperature,
+        top_k: topK,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error (HTTP ${res.status})`);
+    }
+
+    const data = await res.json();
+    renderXrayResults(data);
+  } catch (err) {
+    console.error('Next-Token X-Ray inspection failed:', err);
+    showXrayError(err.message || 'X-Ray inspection failed.');
+    elements.xrayBarsContainer.innerHTML = '<div class="empty-state"><p>Failed to compute next-token probabilities.</p></div>';
+  } finally {
+    elements.xrayInspectBtn.disabled = false;
+    elements.xrayBtnText.textContent = 'Inspect Distribution';
+  }
+}
+
+function showXrayError(msg) {
+  if (elements.xrayErrorMsg && elements.xrayError) {
+    elements.xrayErrorMsg.textContent = msg;
+    elements.xrayError.style.display = 'flex';
+  }
+}
+
+function renderXrayResults(data) {
+  const candidates = data.top_candidates || [];
+
+  // Update Telemetry Tags
+  if (elements.xrayContextPill) {
+    elements.xrayContextPill.textContent = `Context: ${data.context_length} tokens`;
+  }
+
+  const totalMass = candidates.length > 0 ? candidates[candidates.length - 1].cumulative_probability : 0.0;
+  if (elements.xrayCoveragePill) {
+    elements.xrayCoveragePill.textContent = `Top-${candidates.length} Mass: ${(totalMass * 100).toFixed(1)}%`;
+  }
+
+  // Render Horizontal Bars
+  elements.xrayBarsContainer.innerHTML = '';
+  candidates.forEach(cand => {
+    const row = document.createElement('div');
+    row.className = 'xray-prob-row';
+
+    const rankSpan = document.createElement('span');
+    rankSpan.className = 'xray-rank-pill';
+    rankSpan.textContent = `#${cand.rank}`;
+
+    const tokenChip = document.createElement('span');
+    tokenChip.className = 'xray-token-chip';
+    tokenChip.textContent = cand.token;
+    tokenChip.title = `Token ID: #${cand.token_id}`;
+
+    const track = document.createElement('div');
+    track.className = 'xray-track';
+
+    const fill = document.createElement('div');
+    fill.className = 'xray-fill';
+    const pct = Math.max(0, Math.min(100, cand.probability * 100));
+    fill.style.width = `${pct.toFixed(2)}%`;
+    track.appendChild(fill);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.className = 'xray-pct';
+    pctSpan.textContent = `${pct.toFixed(1)}%`;
+
+    const logitSpan = document.createElement('span');
+    logitSpan.className = 'xray-logit';
+    logitSpan.textContent = `${cand.raw_logit >= 0 ? '+' : ''}${cand.raw_logit.toFixed(2)}`;
+    logitSpan.title = 'Unnormalized raw logit';
+
+    row.appendChild(rankSpan);
+    row.appendChild(tokenChip);
+    row.appendChild(track);
+    row.appendChild(pctSpan);
+    row.appendChild(logitSpan);
+    elements.xrayBarsContainer.appendChild(row);
+  });
+
+  // Render Table
+  if (elements.xrayTableSection && elements.xrayTableBody) {
+    elements.xrayTableSection.style.display = 'block';
+    elements.xrayTableBody.innerHTML = '';
+
+    candidates.forEach(cand => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>#${cand.rank}</strong></td>
+        <td><code>${escapeHtml(cand.token)}</code></td>
+        <td><code>#${cand.token_id}</code></td>
+        <td>${cand.raw_logit >= 0 ? '+' : ''}${cand.raw_logit.toFixed(4)}</td>
+        <td><strong style="color:var(--cyan-light);">${(cand.probability * 100).toFixed(2)}%</strong></td>
+        <td>${(cand.cumulative_probability * 100).toFixed(2)}%</td>
+      `;
+      elements.xrayTableBody.appendChild(tr);
+    });
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ============================================================================
@@ -602,7 +870,6 @@ function renderLossChart(lossList) {
 
     const bar = document.createElement('div');
     bar.className = 'loss-bar-rect';
-    // Calculate normalized percentage height
     const normalizedHeight = 15 + ((lossVal - minLoss) / range) * 85;
     bar.style.height = `${normalizedHeight.toFixed(1)}%`;
 
@@ -621,7 +888,6 @@ function renderLossChart(lossList) {
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize character count for default prefilled prompt
   if (elements.promptInput && elements.promptCharCount) {
     elements.promptCharCount.textContent = `${elements.promptInput.value.length} / 2000`;
   }
